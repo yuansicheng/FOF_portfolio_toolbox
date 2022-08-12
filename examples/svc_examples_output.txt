@@ -58,5 +58,3 @@ PRICE_DATE
 Name: F_NAV_ADJUSTED, Length: 766, dtype: float64
 
 
-
-
