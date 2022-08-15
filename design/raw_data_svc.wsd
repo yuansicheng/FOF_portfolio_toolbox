@@ -1,0 +1,150 @@
+@startuml
+scale 8192*8192
+
+package raw_data_svc{
+    class RawDataSvc
+    interface AbstractRawDataSvc
+    class DbConnector
+    class LocalDbStorage
+    class TableColumnSvc
+    class LocalTable
+    class LocalNavTable
+    class SqlRawDataSvc
+    class LocalRawDataSvc
+}
+
+class RawDataSvc{
+    + setDbConfigFile()
+    + setTableColumnPath()
+    + setLocalDbConfigFile()
+    + sqlQuery()
+    + getFullTable()
+    + getNav()
+}
+note bottom of RawDataSvc
+    func sqlQuery: 
+        return SqlRawDataSvc.query()
+
+    func getFullTable:  
+        if table saved to local:
+            return LocalRawDataSvc.getFullTable()
+        else:
+            return SqlRawDataSvc.getFullTable()
+
+    func getNav:
+        return LocalRawDataSvc.getNav()
+end note
+
+interface AbstractRawDataSvc{
+    + getFullTable()
+}
+
+class DbConnector{
+    - _db_info_file
+    - _db_info
+    - _db_connection
+    - _setDbInfo()
+    - _setDbConnection()
+    + setConfigFile()
+    + getDbConnection()
+    + getDbInfo()
+}
+
+class LocalDbStorage{
+    - _local_db_file
+    - _local_db_info
+    - _local_db_path
+    - _date
+    - _setLocalDbInfo()
+    - _checkLocalDbPath()
+    - _setDate()
+    - _saveLocalFile()
+    - _saveOneTable()
+    + save()
+}
+
+class TableColumnSvc{
+    - _table_column_path
+    - _table_column_dict
+    - _setTableColumnDict()
+    + setConfigFile()
+    + getTableColumn()
+}
+
+class LocalTable{
+    - _table_file
+    - _raw_data
+    - _setTableName()
+    - _loadTable()
+    + getName()
+    + getRawData()
+}
+
+class LocalNavTable{
+    - _windecode_column
+    - _date_column
+    - _nav_column
+    + getNav()
+}
+
+class SqlRawDataSvc{
+    - _db_connection
+    - _getFullTableByYear()
+    - _getTableDistinctYears()
+    - _getTableRowNum()
+    + query()
+    + getFullTable()
+}
+
+class LocalRawDataSvc{
+    - _local_db_config
+    - _local_db_path
+    - _tables
+    - _nav_tables
+    - _setLocalDbConfig()
+    - _setLocalDbPath()
+    - _loadOneTable()
+    + setLocalDbConfigFile()
+    + getFullTable()
+    + getNav()
+}
+
+
+
+SqlRawDataSvc ..|> AbstractRawDataSvc
+LocalRawDataSvc ..|> AbstractRawDataSvc
+LocalNavTable --|> LocalTable
+
+
+SqlRawDataSvc "1" --> "1" RawDataSvc
+LocalRawDataSvc "1" --> "1" RawDataSvc
+
+LocalTable "n" --o "1" LocalRawDataSvc
+LocalNavTable "n" --o "1" LocalRawDataSvc
+
+DbConnector "1" --> "1" SqlRawDataSvc
+TableColumnSvc "1" --> "1" SqlRawDataSvc
+
+SqlRawDataSvc "1" --> "1" LocalDbStorage
+TableColumnSvc "1" --> "1" LocalDbStorage
+
+
+' run  "1" *-- "1" Evaluator
+' run  "1" *-- "1" YamlLoader
+
+' YourStrategy --|> Strategy
+' Strategy  "1" *-- "1" Dataset
+' Strategy  "1" *-- "n" AssetPositionManager
+' Strategy  "1" *-- "n" GroupPositionManager
+' run  "1" *-- "1" DateManager
+' Strategy  "1" *-left- "1" DateManager
+
+' run  "1" *-- "1" IndicatorCalculator
+' Strategy  "1" *-right- "1" IndicatorCalculator
+
+' Dataset  "1" *-- "n" Asset
+' Dataset  "1" *-- "n" Group
+' Benchmark  --|> Dataset
+
+
+@enduml
