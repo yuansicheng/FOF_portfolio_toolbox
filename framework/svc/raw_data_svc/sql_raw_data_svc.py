@@ -11,22 +11,23 @@ raw_data_svc_path = os.path.dirname(__file__)
 if raw_data_svc_path not in sys.path:
     sys.path.append(raw_data_svc_path)
 
-from db_connector import db_connector
-from table_column_svc import table_column_svc
+from db_connector import DbConnector
+from table_column_svc import TableColumnSvc
 from abstract_raw_data_svc import AbstractRawDataSvc
 
 import pandas as pd
 from tqdm import tqdm
 
-__all__ = ['sql_raw_data_svc']
-
 class SqlRawDataSvc(AbstractRawDataSvc):
     def __init__(self) -> None:
+        if not self._isFirstInit():
+            return
+        print('init SqlRawDataSvc')
         super().__init__()
-        self._db_connector = db_connector
-        self._db_connection = db_connector.getDbConnection()
+        self._db_connector = DbConnector()
+        self._db_connection = self._db_connector.getDbConnection()
 
-        self._table_column_svc = table_column_svc
+        self._table_column_svc = TableColumnSvc()
 
 
     def _getFullTableByYear(self, table_name, columns):
@@ -74,7 +75,7 @@ class SqlRawDataSvc(AbstractRawDataSvc):
             return self._getFullTableByYear(table_name, columns)
         
 
-sql_raw_data_svc = SqlRawDataSvc()
+# sql_raw_data_svc = SqlRawDataSvc()
 
 # # test
 # print(sql_raw_data_svc.getFullTable('chinamutualfunddescription', columns=['OPDATE']))

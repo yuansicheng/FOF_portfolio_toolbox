@@ -16,14 +16,14 @@ raw_data_svc_path = os.path.dirname(__file__)
 if raw_data_svc_path not in sys.path:
     sys.path.append(raw_data_svc_path)
 
-from raw_data_svc import raw_data_svc
-from table_column_svc import table_column_svc
+from raw_data_svc import RawDataSvc
+from table_column_svc import TableColumnSvc
 
 class LocalDbStorage:
     def __init__(self, local_db_file=os.path.join(os.path.dirname(__file__), 'local_db.yaml')) -> None:
-        self.local_db_file = local_db_file
-        self._raw_data_svc = raw_data_svc
-        self._table_column_svc = table_column_svc
+        self._local_db_file = local_db_file
+        self._raw_data_svc = RawDataSvc()
+        self._table_column_svc = TableColumnSvc()
         self._setLocalDbInfo()
         self._setDate()
         self._checkLocalDbPath()
@@ -31,8 +31,8 @@ class LocalDbStorage:
         # print(self._local_db_info)
 
     def _setLocalDbInfo(self):
-        with open(self.local_db_file) as f:
-            self._local_db_info = yaml.load(f)
+        with open(self._local_db_file) as f:
+            self._local_db_info = yaml.load(f, Loader=yaml.FullLoader)
         self._tables = self._local_db_info['tables']
 
     def _checkLocalDbPath(self):

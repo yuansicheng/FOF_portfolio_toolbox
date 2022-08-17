@@ -17,20 +17,20 @@ from abstract_raw_data_svc import AbstractRawDataSvc
 import pandas as pd
 import yaml
 
-__all__ = ['local_raw_data_svc']
-
 class LocalRawDataSvc(AbstractRawDataSvc):
     def __init__(self) -> None:
+        if not self._isFirstInit():
+            return
+        print('init LocalRawDataSvc')
         super().__init__()
         self.setLocalDbConfigFile()
-        self._setLocalDbPath()
         self._tables = {}
         self._nav_tables = {}
         
 
     def _setLocalDbConfig(self):
         with open(self._local_db_config_file) as f:
-            self._local_db_config = yaml.load(f)
+            self._local_db_config = yaml.load(f, Loader=yaml.FullLoader)
 
     def _setLocalDbPath(self):
         self._local_db_path = os.path.join(raw_data_svc_path, self._local_db_config['local_db_loc'])
@@ -131,7 +131,7 @@ class LocalNavTable(LocalTable):
         nav_data.index = nav_data[self._date_column]
         return nav_data[self._nav_column]
 
-local_raw_data_svc = LocalRawDataSvc()
+# local_raw_data_svc = LocalRawDataSvc()
 
 # # test
 # aindexeodprices_table = LocalNavTable(

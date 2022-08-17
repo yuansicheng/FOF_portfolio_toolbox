@@ -1,0 +1,13 @@
+@startmindmap
+scale 8192*8192
+
+* FOF_portfolio
+    ** framework
+        *** svc
+            **** raw_data_svc
+            **** date_svc
+    ** example
+    ** local_db
+    ** design
+
+@endmindmap

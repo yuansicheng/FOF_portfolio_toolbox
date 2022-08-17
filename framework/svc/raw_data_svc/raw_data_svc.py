@@ -11,16 +11,24 @@ raw_data_svc_path = os.path.dirname(__file__)
 if raw_data_svc_path not in sys.path:
     sys.path.append(raw_data_svc_path)
 
-from sql_raw_data_svc import sql_raw_data_svc
-from local_raw_data_svc import local_raw_data_svc
+svc_path = os.path.join(raw_data_svc_path, '..')
+if svc_path not in sys.path:
+    sys.path.append(svc_path)
 
-__all__ = ['raw_data_svc']
+from singleton import Singleton
 
-class RawDataSvc:
+from sql_raw_data_svc import SqlRawDataSvc
+from local_raw_data_svc import LocalRawDataSvc
+
+# __all__ = ['raw_data_svc']
+
+class RawDataSvc(Singleton):
     def __init__(self) -> None:
-        print('init raw_data_svc')
-        self._sql_raw_data_svc = sql_raw_data_svc
-        self._local_raw_data_svc = local_raw_data_svc
+        if not self._isFirstInit():
+            return
+        print('init RawDataSvc')
+        self._sql_raw_data_svc = SqlRawDataSvc()
+        self._local_raw_data_svc = LocalRawDataSvc()
 
     ###########################################
     # api
@@ -47,7 +55,8 @@ class RawDataSvc:
     def getNav(self, table_name, windcode):
         return self._local_raw_data_svc.getNav(table_name, windcode)
 
-raw_data_svc = RawDataSvc()
+# raw_data_svc = RawDataSvc()
+
 
 # # test
 # print(raw_data_svc.getNav('aindexeodprices', '000003.SH'))

@@ -14,14 +14,14 @@ raw_data_svc_path = os.path.dirname(__file__)
 if raw_data_svc_path not in sys.path:
     sys.path.append(raw_data_svc_path)
 
-from raw_data_svc import raw_data_svc
+from raw_data_svc import RawDataSvc
 
 class SaveTableColumns:
     def __init__(self, table_column_path = os.path.join(os.path.dirname(__file__), 'table_columns')) -> None:
         self._table_column_path = table_column_path
         if not os.path.isdir(self._table_column_path):
             os.makedirs(self._table_column_path)
-        self._raw_data_svc = raw_data_svc
+        self._raw_data_svc = RawDataSvc()
 
         self._db_name = self._raw_data_svc._db_connector.getDbInfo()['db']
 

@@ -9,39 +9,51 @@ import os, sys, argparse, logging
 
 import yaml
 import pymysql
+from sqlalchemy import create_engine
 
-from functools import wraps
+svc_path = os.path.join(os.path.dirname(__file__), '..')
+if svc_path not in sys.path:
+    sys.path.append(svc_path)
 
-__all__ = ['db_connector']
+from singleton import Singleton
 
-class DbConnector:
+class DbConnector(Singleton):
     def __init__(self, ) -> None:
-        self._db_info_file = None
-        self._db_connection = None
-
+        if not self._isFirstInit():
+            return
+        print('init DbConnector')
         self.setConfigFile()
-        self._setDbInfo()
 
     def _setDbInfo(self):
         with open(self._db_info_file) as f:
-            self._db_info = yaml.load(f)
+            self._db_info = yaml.load(f, Loader=yaml.FullLoader)
 
     def _setDbConnection(self):
         self._db_connection = pymysql.connect(
             host  = self._db_info['host'],
             user = self._db_info['user'],
-            password  =self._db_info['password'],
+            password = self._db_info['password'],
             db = self._db_info['db'],
             port = self._db_info['port'],
             charset = 'GBK'
         )
+
+    # better way for py38
+    def _setDbConnectionAlchemy(self):
+        DB_URI = 'mysql+pymysql://{username}:{pwd}@{host}:{port}/{db}?charset=utf8'.format(
+            username = self._db_info['user'], 
+            pwd = self._db_info['password'], 
+            host = self._db_info['host'], 
+            port = self._db_info['port'], 
+            db = self._db_info['db'])
+        self._db_connection = create_engine(DB_URI)
 
     ##########################################
     # api
     def setConfigFile(self, db_info_file=os.path.join(os.path.dirname(__file__), 'db_info.yaml')):
         self._db_info_file = db_info_file
         self._setDbInfo()
-        self._setDbConnection()
+        self._setDbConnectionAlchemy()
 
     def getDbConnection(self):
         return self._db_connection
@@ -49,9 +61,6 @@ class DbConnector:
     def getDbInfo(self):
         return self._db_info
 
-    
-
-db_connector = DbConnector()
 
 # test
 # print(db_connector.getDbConnection())

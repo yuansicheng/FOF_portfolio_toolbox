@@ -9,17 +9,25 @@ import os, sys, argparse, logging
 
 import yaml
 
-class TableColumnSvc:
+svc_path = os.path.join(os.path.dirname(__file__), '..')
+if svc_path not in sys.path:
+    sys.path.append(svc_path)
+
+from singleton import Singleton
+
+class TableColumnSvc(Singleton):
     def __init__(self) -> None:
+        if not self._isFirstInit():
+            return
+        print('init TableColumnSvc')
         self._table_column_path = None
         self.setConfigFile()
-        self._setTableColumnDict()
 
     def _setTableColumnDict(self):
         self._table_column_dict = {}
         for table_column_file in os.listdir(self._table_column_path):
             with open(os.path.join(self._table_column_path, table_column_file)) as f:
-                self._table_column_dict[self._file2Table(table_column_file)] = yaml.load(f)
+                self._table_column_dict[self._file2Table(table_column_file)] = yaml.load(f, Loader=yaml.FullLoader)
 
 
     def _file2Table(self, file_name):
@@ -37,7 +45,7 @@ class TableColumnSvc:
         else:
             return ['*']
 
-table_column_svc = TableColumnSvc()
+# table_column_svc = TableColumnSvc()
 
 # test
 # print(table_column_svc.getTableColumn('chinamutualfunddescription'))
