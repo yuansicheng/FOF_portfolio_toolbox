@@ -24,3 +24,6 @@ python local_db_storage.py
 提供日期相关操作的接口， 数据格式统一使用datetime.datetime。
 ![date_svc类图](../../design/date_svc.png) 
 
+## constant_svc
+提供获取常数的服务，用户将常数存入yaml文件中，使用时可以通过getConstant接口或直接访问attr的方式获取常数。
+
