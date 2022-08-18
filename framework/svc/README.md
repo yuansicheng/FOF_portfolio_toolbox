@@ -3,7 +3,7 @@
 
 用户使用服务时，先从import_svc导入getSvc函数，该函数通过配置文件寻找svc的位置，用户使用时不需要通过路径寻找包的位置。
 
-参考示例代码：https://github.com/yuansicheng/FOF_portfolio_toolbox/blob/master/examples/svc_examples.ipynb。
+参考示例代码：https://github.com/yuansicheng/FOF_portfolio_toolbox/blob/master/examples/svc_examples.ipynb
 
 ## raw_data_svc
 提供原始数据相关的接口。
