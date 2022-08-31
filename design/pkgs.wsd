@@ -6,7 +6,13 @@ scale 8192*8192
         *** svc
             **** raw_data_svc
             **** date_svc
+            **** constant_svc
+            **** yaml_svc
+            **** indicator_svc
+        *** component
+        *** alg
     ** example
+        *** svc_examples
     ** local_db
     ** design
 
