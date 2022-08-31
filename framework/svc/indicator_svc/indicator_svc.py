@@ -60,10 +60,10 @@ class IndicatorSvc(Singleton):
 
 
 # test
-data = pd.Series(np.arange(1, 1.51, 0.001)[:100], index =pd.date_range('2020-01-01', periods=100))
-print(data)
-is_ = IndicatorSvc()
-print(is_.getReturn(data))
+# data = pd.Series(np.arange(1, 1.51, 0.001)[:100], index =pd.date_range('2020-01-01', periods=100))
+# print(data)
+# is_ = IndicatorSvc()
+# print(is_.getReturn(data))
             
 
     
