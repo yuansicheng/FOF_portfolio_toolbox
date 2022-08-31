@@ -14,6 +14,8 @@ if svc_path not in sys.path:
     sys.path.append(svc_path)
 
 from singleton import Singleton
+from importlib import import_module
+yaml_svc = getattr(import_module('yaml_svc.yaml_svc'), 'YamlSvc')()
 
 class TableColumnSvc(Singleton):
     def __init__(self) -> None:
@@ -26,8 +28,7 @@ class TableColumnSvc(Singleton):
     def _setTableColumnDict(self):
         self._table_column_dict = {}
         for table_column_file in os.listdir(self._table_column_path):
-            with open(os.path.join(self._table_column_path, table_column_file)) as f:
-                self._table_column_dict[self._file2Table(table_column_file)] = yaml.load(f, Loader=yaml.FullLoader)
+            self._table_column_dict[self._file2Table(table_column_file)] = yaml_svc.loadYaml(os.path.join(self._table_column_path, table_column_file))
 
 
     def _file2Table(self, file_name):

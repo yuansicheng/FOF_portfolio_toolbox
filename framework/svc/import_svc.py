@@ -14,6 +14,7 @@ if svc_path not in sys.path:
 from singleton import Singleton
 import yaml
 from importlib import import_module
+yaml_svc = getattr(import_module('yaml_svc.yaml_svc'), 'YamlSvc')()
 
 __all__ = ['getSvc']
 
@@ -24,8 +25,7 @@ class ImportSvc(Singleton):
         self.setConfigFile()
 
     def _setSvcInfo(self):
-        with open(self._svc_file) as f:
-            self._svc_info = yaml.load(f, Loader=yaml.FullLoader)
+        self._svc_info = yaml_svc.loadYaml(self._svc_file)
 
     def setConfigFile(self, svc_file=os.path.join(svc_path, 'svc.yaml')):
         self._svc_file = svc_file

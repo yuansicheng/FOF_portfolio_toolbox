@@ -16,10 +16,7 @@ if svc_path not in sys.path:
     sys.path.append(svc_path)
 
 from import_svc import getSvc
-
-svc_path = os.path.join(os.path.dirname(__file__), '..')
-if svc_path not in sys.path:
-    sys.path.append(svc_path)
+raw_data_svc = getSvc('RawDataSvc')
 
 from singleton import Singleton
 
@@ -28,12 +25,11 @@ class DateSvc(Singleton):
         if not self._isFirstInit():
             return
         print('init DateSvc')
-        self._raw_data_svc = getSvc('RawDataSvc')
         self.setMode()
 
     def _setTradeDays(self):
         sql = "SELECT TRADE_DAYS FROM asharecalendar WHERE S_INFO_EXCHMARKET='{}' ORDER BY TRADE_DAYS".format(self._mode)
-        self._trade_days = self._raw_data_svc.sqlQuery(sql)['TRADE_DAYS']
+        self._trade_days = raw_data_svc.sqlQuery(sql)['TRADE_DAYS']
         self._trade_days = pd.to_datetime(self._trade_days)
         self._trade_days.index = self._trade_days.values
 

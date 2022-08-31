@@ -16,6 +16,8 @@ if svc_path not in sys.path:
     sys.path.append(svc_path)
 
 from singleton import Singleton
+from importlib import import_module
+yaml_svc = getattr(import_module('yaml_svc.yaml_svc'), 'YamlSvc')()
 
 class DbConnector(Singleton):
     def __init__(self, ) -> None:
@@ -25,8 +27,7 @@ class DbConnector(Singleton):
         self.setConfigFile()
 
     def _setDbInfo(self):
-        with open(self._db_info_file) as f:
-            self._db_info = yaml.load(f, Loader=yaml.FullLoader)
+        self._db_info = yaml_svc.loadYaml(self._db_info_file)
 
     def _setDbConnection(self):
         self._db_connection = pymysql.connect(
