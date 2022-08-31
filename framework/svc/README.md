@@ -27,3 +27,11 @@ python local_db_storage.py
 ## constant_svc
 提供获取常数的服务，用户将常数存入yaml文件中，使用时可以通过getConstant接口或直接访问attr的方式获取常数。
 
+## indicator_svc
+封装quantstats中计算指标的函数，提供便捷的指标计算服务。
+- 收益率
+- 波动率
+- sharpe
+- sortino
+- calmar
+
