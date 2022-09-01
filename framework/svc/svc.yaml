@@ -1,0 +1,14 @@
+RawDataSvc:
+  raw_data_svc/raw_data_svc.py
+
+DateSvc:
+  date_svc/date_svc.py
+
+ConstantSvc:
+  constant_svc/constant_svc.py
+
+YamlSvc:
+  yaml_svc/yaml_svc.py
+
+IndicatorSvc:
+  indicator_svc/indicator_svc.py
