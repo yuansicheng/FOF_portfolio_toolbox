@@ -55,6 +55,10 @@ class RawDataSvc(Singleton):
     def getNav(self, table_name, windcode):
         return self._local_raw_data_svc.getNav(table_name, windcode)
 
+    def getTradeDays(self, mode='SSE'):
+        sql = "SELECT TRADE_DAYS FROM asharecalendar WHERE S_INFO_EXCHMARKET='{}' ORDER BY TRADE_DAYS".format(mode)
+        return self.sqlQuery(sql)['TRADE_DAYS']
+
 # raw_data_svc = RawDataSvc()
 
 

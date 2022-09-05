@@ -7,13 +7,14 @@
 
 import os, sys, argparse, logging
 
-import yaml
-
 svc_path = os.path.join(os.path.dirname(__file__), '..')
 if svc_path not in sys.path:
     sys.path.append(svc_path)
 
 from singleton import Singleton
+
+from importlib import import_module
+yaml_svc = getattr(import_module('yaml_svc.yaml_svc'), 'YamlSvc')()
 
 class ConstantSvc(Singleton):
     def __init__(self, ) -> None:
@@ -23,8 +24,7 @@ class ConstantSvc(Singleton):
         self.setConfigFile()
 
     def _setConstantInfo(self):
-        with open(self._constant_file) as f:
-            self._constant = yaml.load(f, Loader=yaml.FullLoader)
+        self._constant = yaml_svc.loadYaml(self._constant_file)
         for k, v in self._constant.items():
             setattr(self, k , v)
 

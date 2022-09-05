@@ -36,10 +36,25 @@ class Group(AssetBase):
     def addChildAsset(self, asset):
         self._child_asset.append(asset)
 
-# test
+    def getAllGroup(self):
+        # dfs
+        all_group = [self]
+        for group in self.getChildGroup():
+            all_group += group.getAllGroup()
+        return all_group
+
+    def getAllAsset(self):
+        # dfs
+        all_asset = []
+        for group in self.getChildGroup():
+            all_asset += group.getAllAsset()
+        return all_asset
+
+# # test
 # root = Group('root')
 # g1 = Group('1')
 # g2 = Group('2')
 # root.addChildGroup(g1)
 # g1.addChildGroup(g2)
 # root.print()
+# print([group.getName() for group in root.getAllGroup()])

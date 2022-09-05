@@ -15,7 +15,14 @@ if raw_data_svc_path not in sys.path:
 from abstract_raw_data_svc import AbstractRawDataSvc
 
 import pandas as pd
-import yaml
+
+framework_path = os.path.join(os.path.dirname(__file__), '../..')
+if framework_path not in sys.path:
+    sys.path.append(framework_path)
+
+from import_func import getSvc
+yaml_svc = getSvc('YamlSvc')
+
 
 class LocalRawDataSvc(AbstractRawDataSvc):
     def __init__(self) -> None:
@@ -29,8 +36,7 @@ class LocalRawDataSvc(AbstractRawDataSvc):
         
 
     def _setLocalDbConfig(self):
-        with open(self._local_db_config_file) as f:
-            self._local_db_config = yaml.load(f, Loader=yaml.FullLoader)
+        self._local_db_config = yaml_svc.loadYaml(self._local_db_config_file)
 
     def _setLocalDbPath(self):
         self._local_db_path = os.path.join(raw_data_svc_path, self._local_db_config['local_db_loc'])
@@ -90,6 +96,7 @@ class LocalRawDataSvc(AbstractRawDataSvc):
 class LocalTable:
     def __init__(self, table_file) -> None:
         self._table_file = table_file
+        self._setTableName()
         self._loadTable()
 
     def _setTableName(self):
