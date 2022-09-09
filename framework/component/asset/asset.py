@@ -33,6 +33,9 @@ class Asset(AssetBase):
     def setRawNavdata(self, raw_nav_data):
         self._raw_nav_data = date_svc.formatIndex(raw_nav_data)
 
+    def getRawNavData(self):
+        return self._raw_nav_data
+
     def _setRawNavDataFromRawDataSvc(self, table_name):
         self.setRawNavdata(raw_data_svc.getNav(table_name, self._windcode))
 
@@ -40,8 +43,14 @@ class Asset(AssetBase):
         self._id_date = id_date
         self.setUsableNavData(id_date, *args)
 
+    def getIdDate(self):
+        return self._id_date
+
     def setUsableNavData(self, *args):
         self.usable_nav_data = date_svc.cutData(self._raw_nav_data, *args)
+
+    def getUsableNavData(self):
+        return self.usable_nav_data
 
 class WindAsset(Asset):
     def __init__(self, name, windcode) -> None:
