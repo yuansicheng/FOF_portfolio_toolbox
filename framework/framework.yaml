@@ -1,6 +1,6 @@
 svc:
-  RawDataSvc:
-    raw_data_svc/raw_data_svc.py
+  LxwWinddbRawDataSvc:
+    raw_data_svc/lxw_winddb_raw_data_svc/lxw_winddb_raw_data_svc.py
   DateSvc:
     date_svc/date_svc.py
   ConstantSvc:

@@ -28,31 +28,38 @@ class Group(AssetBase):
             group.print(level+1)
 
     def getChildGroup(self):
-        return list(self._child_group.values())
+        return self._child_group
 
     def getChildAsset(self):
-        return list(self._child_asset.values())
+        return self._child_asset
 
     def addChildGroup(self, group):
-        assert group not in self._child_group
+        assert group.getName() not in self._child_group
         self._child_group[group.getName()] = group
 
     def addChildAsset(self, asset):
-        assert asset not in self._child_asset
+        assert asset.getName() not in self._child_asset
         self._child_asset[asset.getName()] = asset
 
-    def getAllGroup(self):
+    def _updatePreffix(self, preffix, s):
+        if not preffix:
+            return s
+        return preffix + '/' + s
+
+    def getAllGroup(self, preffix=''):
         # dfs
-        all_group = [self]
-        for group in self.getChildGroup():
-            all_group += group.getAllGroup()
+        all_group = {}
+        for group in self.getChildGroup().values():
+            key = self._updatePreffix(preffix, group.getName())
+            all_group[key] = group
+            all_group.update(group.getAllGroup(key))
         return all_group
 
-    def getAllAsset(self):
+    def getAllAsset(self, preffix=''):
         # dfs
-        all_asset = self.getChildAsset()
-        for group in self.getChildGroup():
-            all_asset += group.getAllAsset()
+        all_asset = {self._updatePreffix(preffix, name): asset for name, asset in self.getChildAsset().items()}
+        for group in self.getChildGroup().values():
+            all_asset.update(group.getAllAsset(self._updatePreffix(preffix, group.getName())))
         return all_asset
 
     def getGroup(self, group_path):

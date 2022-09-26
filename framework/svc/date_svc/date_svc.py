@@ -5,7 +5,7 @@
 # @Contact	:	yuansicheng@ihep.ac.cn
 # @Date		:	2022-08-12 
 
-from datetime import datetime
+from datetime import datetime, date
 import os, sys, argparse, logging
 
 import pandas as pd
@@ -15,9 +15,6 @@ framework_path = os.path.join(os.path.dirname(__file__), '../..')
 if framework_path not in sys.path:
     sys.path.append(framework_path)
 
-from import_func import getSvc
-raw_data_svc = getSvc('RawDataSvc')
-
 from singleton import Singleton
 
 class DateSvc(Singleton):
@@ -25,25 +22,22 @@ class DateSvc(Singleton):
         if not self._isFirstInit():
             return
         print('init DateSvc')
-        self.setMode()
-
-    def _setTradeDays(self):
-        self._trade_days = raw_data_svc.getTradeDays(mode=self._mode)
-        self._trade_days = pd.to_datetime(self._trade_days)
-        self._trade_days.index = self._trade_days.values
+        self._trade_days = None
 
     ###########################################
     # api
 
-    def setMode(self, mode='SSE'):
-        self._mode = mode
-        self._setTradeDays()
+    def setTradeDays(self, trade_days):
+        self._trade_days = trade_days
+        self._trade_days = pd.to_datetime(self._trade_days)
+        self._trade_days.index = self._trade_days.values
 
     def formatIndex(self, data):
         data.index = pd.to_datetime(data.index)
         return data
 
     def getAllTradeDays(self):
+        assert not self._trade_days is None, 'Please setTradeDays first'
         return self._trade_days
 
     def cutDataWithIndex(self, data, index):
@@ -68,12 +62,18 @@ class DateSvc(Singleton):
         return self.cutDataWithIndex(data, self.getIndexWithRange(start_date, end_date))
 
     def getIndexWithWindow(self, id_date, window):
+        id_date = id_date if isinstance(id_date, date) else id_date.date()
+        
         assert self.getAllTradeDays()[0].date() < id_date < self.getAllTradeDays()[-1].date(), 'id_date {} out of range'.format(id_date)
-        index = self.getAllTradeDays().loc[:id_date]
+        # drop id_date
+        index = self.getAllTradeDays().loc[:id_date].iloc[:-1]
         assert index.shape[0] >= window, 'do not have enough date for window'
         return index.iloc[-window:]
 
     def getIndexWithRange(self, start_date, end_date):
+        start_date = start_date if isinstance(start_date, date) else start_date.date()
+        end_date = end_date if isinstance(end_date, date) else end_date.date()
+
         assert self.getAllTradeDays()[0].date() <= start_date <= end_date <= self.getAllTradeDays()[-1].date(), 'start_date {} or end_date {} out of range'.format(start_date, end_date)
         return self.getAllTradeDays().loc[start_date:end_date]
 

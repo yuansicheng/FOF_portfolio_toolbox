@@ -20,24 +20,24 @@ if framework_path not in sys.path:
     sys.path.append(framework_path)
 
 from import_func import getSvc
-raw_data_svc = getSvc('RawDataSvc')
 date_svc = getSvc('DateSvc')
 
 class Asset(AssetBase):
     def __init__(self, name) -> None:
-        super().__init__(name)   
+        super().__init__(name) 
+
+        self._raw_nav_data = None 
+        self._raw_return = None 
 
     def print(self, level=0):
         print('{}asset: {}'.format('\t'*level, self._name))
 
     def setRawNavdata(self, raw_nav_data):
         self._raw_nav_data = date_svc.formatIndex(raw_nav_data)
+        self._raw_return = self._raw_nav_data / self._raw_nav_data.shift() - 1
 
     def getRawNavData(self):
         return self._raw_nav_data
-
-    def _setRawNavDataFromRawDataSvc(self, table_name):
-        self.setRawNavdata(raw_data_svc.getNav(table_name, self._windcode))
 
     def setIdDate(self, id_date, *args):
         self._id_date = id_date
@@ -47,40 +47,23 @@ class Asset(AssetBase):
         return self._id_date
 
     def setUsableNavData(self, *args):
-        self.usable_nav_data = date_svc.cutData(self._raw_nav_data, *args)
+        self._usable_nav_data = date_svc.cutData(self._raw_nav_data, *args)
+        self._usable_return_data = date_svc.cutData(self._raw_return, *args)
 
     def getUsableNavData(self):
-        return self.usable_nav_data
+        return self._usable_nav_data
 
-class WindAsset(Asset):
-    def __init__(self, name, windcode) -> None:
-        super().__init__(name)
-        self._windcode = windcode
+    def getUsableReturnData(self):
+        return self._usable_return_data
 
-    def getWindcode(self):
-        return self._windcode
+    def isTradable(self, id_date):
+        return self._raw_nav_data.index[0] <= pd.Timestamp(id_date) <= self._raw_nav_data.index[-1]
 
-
-class IndexAsset(WindAsset):
-    def __init__(self, name, windcode) -> None:
-        super().__init__(name, windcode)       
-        self._setRawNavDataFromRawDataSvc('aindexeodprices')
-        
-
-class StockAsset(WindAsset):
-    def __init__(self, name, windcode) -> None:
-        super().__init__(name, windcode)
-        self._setRawNavDataFromRawDataSvc('ashareeodprices')
-
-class FundAsset(WindAsset):
-    def __init__(self, name, windcode) -> None:
-        super().__init__(name, windcode)
-        self._setRawNavDataFromRawDataSvc('chinamutualfundnav')
+    def getAge(self, id_date):
+        if not self.isTradable(id_date):
+            return -1
+        return (pd.Timestamp(id_date) - self._raw_nav_data.index[0]).days
 
     
 
 # # test
-# from datetime import date
-# a = IndexAsset('1', '000003.SH')
-# a.setIdDate(date(2020, 12, 31), 22)
-# print(a.usable_nav_data, a.getSharpe(a.usable_nav_data))

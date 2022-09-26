@@ -9,24 +9,17 @@ import os, sys, argparse, logging
 
 from copy import deepcopy
 
-framework_path = os.path.join(os.path.dirname(__file__), '../..')
-if framework_path not in sys.path:
-    sys.path.append(framework_path)
-
-from import_func import getSvc
-indicator_svc = getSvc('IndicatorSvc')
-
 class AssetBase:
     def __init__(self, name) -> None:
         assert name, 'name must not be None'
         self._name = name
 
-        self._setIndicatorFuns()
+        self._position_manager = None
+
         self.setWeightRange()
-        
-    def _setIndicatorFuns(self):
-        for func in [func for func in dir(indicator_svc) if func.startswith('get')]:
-            setattr(self, func, getattr(indicator_svc, func))
+
+    def getPositionManager(self):
+        return self._position_manager
 
     def print(self, level=0):
         raise NotImplementedError
