@@ -38,6 +38,10 @@ class PositionManagerBase:
         setattr(self, name, init_value)
         self._historical_data_manager.addColumn(name)
 
+    def deletePositionData(self, name):
+        delattr(self, name)
+        self._historical_data_manager.pop(name)
+
     def getHistoricalData(self):
         return self._historical_data_manager.getData()
 
@@ -62,10 +66,6 @@ class PositionManagerBase:
     def updateWeight(self, total):
         self.weight = self.position / total if total != 0 else 0
 
-    def updateReturns(self):
-        self.holding_return = self.position - self.investment
-        self.holding_yield = self.holding_return / self.investment if self.investment else 0
-        self.total_return = self.holding_return + self.historical_return - self.transection_cost
 
 
 # test

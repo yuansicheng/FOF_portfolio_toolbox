@@ -46,20 +46,24 @@ class Group(AssetBase):
             return s
         return preffix + '/' + s
 
-    def getAllGroup(self, preffix=''):
+    def getAllGroup(self, is_top=True, preffix=''):
         # dfs
         all_group = {}
+        if is_top:
+            all_group[self.getName()] = self
         for group in self.getChildGroup().values():
             key = self._updatePreffix(preffix, group.getName())
             all_group[key] = group
-            all_group.update(group.getAllGroup(key))
+            all_group.update(group.getAllGroup(is_top=False, preffix=key))
         return all_group
 
-    def getAllAsset(self, preffix=''):
+    def getAllAsset(self, preffix='', pop_cash=False):
         # dfs
         all_asset = {self._updatePreffix(preffix, name): asset for name, asset in self.getChildAsset().items()}
         for group in self.getChildGroup().values():
             all_asset.update(group.getAllAsset(self._updatePreffix(preffix, group.getName())))
+        if pop_cash and 'cash' in all_asset:
+            all_asset.pop('cash')
         return all_asset
 
     def getGroup(self, group_path):
@@ -81,6 +85,13 @@ class Group(AssetBase):
             return None
         return self.getGroup(asset_path[:-1])._child_asset[asset_path[-1]]
 
+    def setIdDateRecursively(self, id_date, *args):
+        for group in self.getAllGroup().values():
+            group.setIdDate(id_date)
+        for asset in self.getAllAsset().values():
+            asset.setIdDate(id_date, *args)
+
+
 
 
 # # test
@@ -98,3 +109,6 @@ class Group(AssetBase):
 # root.print()
 # print(root.getGroup('g1/g2').getName())
 # print(root.getAsset('g1/a2').getName())
+
+# print(root.getAllGroup())
+# print(root.getAllAsset())

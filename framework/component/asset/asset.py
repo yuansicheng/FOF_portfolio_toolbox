@@ -6,6 +6,7 @@
 # @Date		:	2022-09-01 
 
 import os, sys, argparse, logging
+import warnings
 
 import pandas as pd
 
@@ -29,10 +30,15 @@ class Asset(AssetBase):
         self._raw_nav_data = None 
         self._raw_return = None 
 
+        self._transection_cost = 0
+
+    def setTransectionCost(self, transection_cost):
+        self._transection_cost = transection_cost
+
     def print(self, level=0):
         print('{}asset: {}'.format('\t'*level, self._name))
 
-    def setRawNavdata(self, raw_nav_data):
+    def setRawNavData(self, raw_nav_data):
         self._raw_nav_data = date_svc.formatIndex(raw_nav_data)
         self._raw_return = self._raw_nav_data / self._raw_nav_data.shift() - 1
 
@@ -40,7 +46,7 @@ class Asset(AssetBase):
         return self._raw_nav_data
 
     def setIdDate(self, id_date, *args):
-        self._id_date = id_date
+        super().setIdDate(id_date)
         self.setUsableNavData(id_date, *args)
 
     def getIdDate(self):
@@ -59,10 +65,27 @@ class Asset(AssetBase):
     def isTradable(self, id_date):
         return self._raw_nav_data.index[0] <= pd.Timestamp(id_date) <= self._raw_nav_data.index[-1]
 
+    def isDelisted(self, id_date):
+        return pd.Timestamp(id_date) > self._raw_nav_data.index[-1]
+
     def getAge(self, id_date):
         if not self.isTradable(id_date):
             return -1
         return (pd.Timestamp(id_date) - self._raw_nav_data.index[0]).days
+
+    def executeOrder(self, order):
+        assert not self.getPositionManager() is None
+        self.getPositionManager().executeOrder(order, transection_cost=self._transection_cost)
+
+    def updateAfterClose(self):
+        assert not self.getPositionManager() is None
+        self.getPositionManager().updateAfterClose(self._raw_return.loc[self._id_date])
+
+    def updateAfterExecuteOrders(self):
+        assert not self.getPositionManager() is None
+        self.getPositionManager().updateAfterExecuteOrders(self._raw_return.loc[self._id_date])
+    
+
 
     
 

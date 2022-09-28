@@ -22,6 +22,7 @@ class OrderManager:
             'money',  
             'executed', 
             'execute_money', 
+            'transection_cost', 
             'clear_all', 
             'orther', 
         ]

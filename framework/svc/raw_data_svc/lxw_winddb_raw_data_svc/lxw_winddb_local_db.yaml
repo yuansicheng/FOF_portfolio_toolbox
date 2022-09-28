@@ -1,0 +1,21 @@
+tables:
+  - aindexeodprices
+  - chinamutualfundnav
+  - ashareeodprices
+
+local_db_loc:
+  ../../../../local_db/lxw_winddb
+
+nav_tables:
+  aindexeodprices:
+    windcode_column: S_INFO_WINDCODE
+    date_column: TRADE_DT
+    nav_column: S_DQ_CLOSE
+  chinamutualfundnav:
+    windcode_column: F_INFO_WINDCODE
+    date_column: PRICE_DATE
+    nav_column: F_NAV_ADJUSTED
+  ashareeodprices:
+    windcode_column: S_INFO_WINDCODE
+    date_column: TRADE_DT
+    nav_column: S_DQ_CLOSE

@@ -11,12 +11,19 @@ from copy import deepcopy
 
 class AssetBase:
     def __init__(self, name) -> None:
-        assert name, 'name must not be None'
+        assert not name is None, 'name must not be None'
         self._name = name
 
-        self._position_manager = None
+        self._id_date = None
 
+        self._position_manager = None
         self.setWeightRange()
+
+    def setIdDate(self, id_date):
+        self._id_date = id_date
+
+    def setPositionManager(self, position_manager):
+        self._position_manager = position_manager
 
     def getPositionManager(self):
         return self._position_manager
@@ -36,6 +43,14 @@ class AssetBase:
 
     def copy(self):
         return deepcopy(self)
+
+    def updateAfterClose(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def updateAfterExecuteOrders(self, *args, **kwargs):
+        raise NotImplementedError
+
+    
 
 
 # # test

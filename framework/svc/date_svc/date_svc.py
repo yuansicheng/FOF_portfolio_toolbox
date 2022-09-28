@@ -11,9 +11,9 @@ import os, sys, argparse, logging
 import pandas as pd
 import warnings
 
-framework_path = os.path.join(os.path.dirname(__file__), '../..')
-if framework_path not in sys.path:
-    sys.path.append(framework_path)
+svc_path = os.path.join(os.path.dirname(__file__), '..')
+if svc_path not in sys.path:
+    sys.path.append(svc_path)
 
 from singleton import Singleton
 
@@ -61,20 +61,15 @@ class DateSvc(Singleton):
     def cutDataWithRange(self, data, start_date, end_date):
         return self.cutDataWithIndex(data, self.getIndexWithRange(start_date, end_date))
 
-    def getIndexWithWindow(self, id_date, window):
-        id_date = id_date if isinstance(id_date, date) else id_date.date()
-        
-        assert self.getAllTradeDays()[0].date() < id_date < self.getAllTradeDays()[-1].date(), 'id_date {} out of range'.format(id_date)
+    def getIndexWithWindow(self, id_date, window):   
+        assert self.getAllTradeDays()[0] < pd.to_datetime(id_date) < self.getAllTradeDays()[-1], 'id_date {} out of range'.format(id_date)
         # drop id_date
         index = self.getAllTradeDays().loc[:id_date].iloc[:-1]
         assert index.shape[0] >= window, 'do not have enough date for window'
         return index.iloc[-window:]
 
     def getIndexWithRange(self, start_date, end_date):
-        start_date = start_date if isinstance(start_date, date) else start_date.date()
-        end_date = end_date if isinstance(end_date, date) else end_date.date()
-
-        assert self.getAllTradeDays()[0].date() <= start_date <= end_date <= self.getAllTradeDays()[-1].date(), 'start_date {} or end_date {} out of range'.format(start_date, end_date)
+        assert self.getAllTradeDays()[0] <= pd.to_datetime(start_date) <= pd.to_datetime(end_date) <= self.getAllTradeDays()[-1], 'start_date {} or end_date {} out of range'.format(start_date, end_date)
         return self.getAllTradeDays().loc[start_date:end_date]
 
     def getIndex(self, *args):
@@ -93,12 +88,39 @@ class DateSvc(Singleton):
         elif len(args) == 2:
             return self.cutDataWithIndex(data, self.getIndex(*args))
 
+    def filterDateIndex(self, date_index, frequency=1):
+        assert isinstance(frequency, int) or frequency in ['weekly', 'monthly', 'quarterly']
+
+        # case 1: int
+        if isinstance(frequency, int):
+            return [date_index[i] for i in range(len(date_index)) if i % frequency==0]
+
+        # case 2: weekly, monthly or quarterly
+        tmp = pd.DataFrame()
+        tmp['date'] = date_index
+        tmp['year'] = [d.year for d in date_index]
+        if frequency == 'weekly':
+            tmp['week_of_year'] = [d.weekofyear for d in date_index]
+            return list(tmp.groupby(['year', 'week_of_year']).first()['date'])
+        if frequency == 'monthly':
+            tmp['month'] = [d.month for d in date_index]
+            return list(tmp.groupby(['year', 'month']).first()['date'])
+        if frequency == 'quarterly':
+            tmp['quarter'] = [(d.month-1)//3 for d in date_index]
+            return list(tmp.groupby(['year', 'quarter']).first()['date'].values)
+
+
 
 
 
 # # test
+# from raw_data_svc.lxw_winddb_raw_data_svc.lxw_winddb_raw_data_svc import LxwWinddbRawDataSvc as RawDataSvc
+# raw_data_svc = RawDataSvc()
 # date_svc = DateSvc()
-# print(date_svc.getIndex(datetime(2020,1,1),datetime(2020,1,31)))
+# date_svc.setTradeDays(raw_data_svc.getTradeDays())
+# index = date_svc.getIndex(datetime(2020,1,1),datetime(2020,12,31))
+
+# print(date_svc.filterDate(index, 'quarterly'))
 
 
 

@@ -15,7 +15,7 @@ from svc.singleton import Singleton
 from importlib import import_module
 yaml_svc = getattr(import_module('svc.yaml_svc.yaml_svc'), 'YamlSvc')()
 
-__all__ = ['getSvc', 'getComponentModule']
+__all__ = ['getSvc']
 
 class ImportObj(Singleton):
     def __init__(self) -> None:
@@ -35,11 +35,6 @@ class ImportObj(Singleton):
         path = (type_ + '.' + self._info[type_][name]).replace('/', '.').replace('.py', '')
         module = import_module(path)
         return getattr(module, name)()
-
-    def getModule(self, type_, name):
-        assert type_ in self._info and name in self._info[type_]
-        path = (type_ + '.' + self._info[type_][name]).replace('/', '.').replace('.py', '')
-        return import_module(path)
         
         
         
@@ -50,10 +45,4 @@ def getSvc(svc_name):
     # return an object of target svc
     return import_obj.getObj('svc', svc_name)
 
-def getComponentModule(component_name):
-    return import_obj.getModule('component', component_name)
-
-# test
-# am = getComponentModule('Asset')
-# print(am.Asset)
 

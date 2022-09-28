@@ -10,9 +10,4 @@ svc:
   IndicatorSvc:
     indicator_svc/indicator_svc.py
 
-component:
-  Group:
-    asset/group.py
-  Asset:
-    asset/asset.py
   

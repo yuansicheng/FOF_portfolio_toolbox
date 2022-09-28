@@ -1,0 +1,5 @@
+host: 101.132.119.106
+port: 3306
+user: magi_winddb
+password: MAGIwinddb666
+db: winddb_alicloud

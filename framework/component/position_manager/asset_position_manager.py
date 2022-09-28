@@ -27,17 +27,31 @@ class AssetPositionManager(PositionManagerBase):
         self.updateWeight(total)
         self.updateReturns()
 
-    def executeOrder(self, order, transection_cost=0.0002) -> float:
+    def updateReturns(self):
+        self.holding_return = self.position - self.investment
+        self.holding_yield = self.holding_return / self.investment if self.investment else 0
+        self.total_return = self.holding_return + self.historical_return - self.transection_cost
+
+    def executeOrder(self, order, transection_cost=0) -> float:
         '''
         input: an order
-        output: a float means how much money you cost, + for buy and - for sell
+        output: a float means how much money you cost, - for buy and + for sell
         '''
         if order == 'clear_all':
-            return self._clearAll()
+            delta_cash, execute_money, cost = self._clearAll()
+            order.clear_all = 1
         elif order.money >= 0:
-            return self._buy(order.money, transection_cost)
+            delta_cash, execute_money, cost = self._buy(order.money, transection_cost)
         else:
-            return self._sell(-order.money, transection_cost)
+            delta_cash, execute_money, cost = self._sell(-order.money, transection_cost)
+        
+        # update the order
+        order.executed = 1
+        order.execute_money = execute_money
+        order.transection_cost = cost
+
+        return delta_cash
+
 
 
     def _buy(self, money, transection_cost):
@@ -46,7 +60,7 @@ class AssetPositionManager(PositionManagerBase):
         1、计算交易成本, 交易成本 = money * transection_cost
         2、计算仓位,仓位增加 money - 交易成本
         3、计算投资,投资增加 money - 交易成本
-        4、返回 money - 交易成本,即执行订单使用的现金
+        4、返回 -money + 交易成本,即执行订单使用的现金、订单金额、交易成本
         '''
         # 1
         cost = money * transection_cost
@@ -57,7 +71,7 @@ class AssetPositionManager(PositionManagerBase):
         # 3
         self.investment += tmp
         # 4
-        return tmp
+        return -tmp, money, cost
 
     def _sell(self, money, transection_cost):
         '''
@@ -68,7 +82,7 @@ class AssetPositionManager(PositionManagerBase):
             3、计算历史收益增加 money / 仓位 * 持有收益 
             4、计算持有收益减少 money / 仓位 * 持有收益  
             5、计算仓位,仓位减少 money                 
-            6、返回 money + transection_cost, 即执行订单后到账的现金
+            6、返回 money - transection_cost, 即执行订单后到账的现金、订单金额、交易成本
         b、卖出金额大于仓位
             tbd
         '''
@@ -87,7 +101,7 @@ class AssetPositionManager(PositionManagerBase):
             # 5
             self.position -= money
             # 6
-            return -money
+            return money - cost, -money, cost
         else:
             raise NotImplementedError
 
