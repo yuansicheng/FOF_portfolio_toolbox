@@ -65,7 +65,7 @@ class LxwWinddbSqlRawDataSvc(Singleton):
 
     def query(self, sql):
         assert sql, 'sql must not be empty'
-        print('raw_data_svc.sqlQuery: {}'.format(sql))
+        logging.debug('raw_data_svc.sqlQuery: {}'.format(sql))
         return pd.read_sql(sql, self._db_connection)
 
     def getFullTable(self, table_name, columns=None):

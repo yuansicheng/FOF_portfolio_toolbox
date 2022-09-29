@@ -16,6 +16,7 @@ from alg.alg_base import AlgBase
 from component.asset.group import Group
 from component.asset.cash_asset import CashAsset
 
+from component.position_manager.group_position_manager import GroupPositionManager
 from component.position_manager.cash_position_manager import CashPositionManager
 
 
@@ -26,6 +27,7 @@ class StrategyBase(AlgBase):
 
     def __init__(self, name, args={}) -> None:
         super().__init__(name)
+        self._alg_dict = {}
         self._initAlgDict()
 
         self._dataset = None
@@ -38,25 +40,34 @@ class StrategyBase(AlgBase):
             if alg_name in args:
                 alg.setArgs(args[alg_name])
 
-    def _initAlgDict(self, alg_dict={}):
-        self._alg_dict = alg_dict
+    def _initAlgDict(self, *args, **kwargs):
+        raise NotImplementedError
 
-    def _initDataset(self):
+    def _initDataset(self, init_position_manager=False):
+        logging.info('strategy {}: init dataset'.format(self.getName()))
         # init root group
         self._dataset = Group('root')
 
         # add cash asset
         cash_asset = CashAsset()
-        cash_asset.setPositionManager(CashPositionManager())
         self._dataset.addChildAsset(cash_asset)
 
+        # add position manager
+        if init_position_manager:
+            self._dataset.setPositionManager(GroupPositionManager())
+            self._dataset.getAsset('cash').setPositionManager(CashPositionManager())
+
     def setInitCash(self, init_cash):
+        logging.info('{}: init cash'.format(self.getName()))
         self.getDataset().getAsset('cash').updateCash(init_cash)
 
     def getDataset(self):
         return self._dataset
 
     def run(self, id_date):
+        '''
+        return dataset, weights, orders
+        '''
         raise NotImplementedError
 
 # # test

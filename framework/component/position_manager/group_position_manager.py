@@ -21,9 +21,12 @@ class GroupPositionManager(PositionManagerBase):
         self.addPositionData('nav', 1)
         # 份额
         self.addPositionData('shares', 0)
+
+    def getAssetSum(self, all_asset, key):
+       return sum([getattr(asset.getPositionManager(), key) for asset in all_asset.values()])
         
     def updateAfterClose(self, all_asset):
-        new_position = [asset.getPositionManager().position for asset in all_asset.values()]
+        new_position = self.getAssetSum(all_asset, 'position')
 
         # shares donot change
         # update nav and position
@@ -31,8 +34,6 @@ class GroupPositionManager(PositionManagerBase):
         self.position = new_position
 
     def updateAfterOrders(self, all_asset):
-        getAssetSum = lambda key: sum([getattr(asset.getPositionManager(), key) for asset in all_asset.values()])
-
         for key in [           
             'weight', # 权重
             'transection_cost', # 总交易成本
@@ -41,12 +42,12 @@ class GroupPositionManager(PositionManagerBase):
             'historical_return', # 历史收益，执行卖出操作后累加
             'total_return', # 总收益 = 持有收益 + 历史收益 - 交易成本
             ]:
-            setattr(self, key, getAssetSum(key))
+            setattr(self, key, self.getAssetSum(all_asset, key))
 
         self.holding_yield = self.holding_return / self.investment if self.investment else 0
 
         # nav donot change
-        new_position = getAssetSum('position')
+        new_position = self.getAssetSum(all_asset, 'position')
         self.shares *= new_position / self.position if self.position else new_position
         self.position = new_position
 

@@ -15,26 +15,27 @@ if framework_path not in sys.path:
 
 from import_func import getSvc
 from component.order_manager.order_manager import OrderManager
+from component.order_manager.order import Order
 
 date_svc = getSvc('DateSvc')
 
 class BackTestManager:
-    def __init__(self, strategy, args={}) -> None:
+    def __init__(self, strategy, name='backtest', args={}) -> None:
         logging.info('init BackTestManager')
         self._strategy = strategy
+        self._dataset = self._strategy.getDataset()
+        self._name = name
         self._order_manager = OrderManager()
 
-        self._dataset = None
         self._orders = []
         self._weights = {}
 
-        self.setBacktestName()
         self._setArgs(args)
         self._setDateIndex()
         self._setStrategyInitCash()
 
-    def setBacktestName(self, name='backtest'):
-        self._name = name
+        self._id_date = None
+
 
     def _setArgs(self, args):
         # init args
@@ -55,25 +56,67 @@ class BackTestManager:
         self.date_range = [datetime(d[0], d[1], d[2]) for d in self.date_range]
 
     def _setDateIndex(self):
+        logging.info('setting date index')
         # set date_index for backtest
         self._date_index = date_svc.getIndex(self.date_range[0], self.date_range[1])
         # which date to run strategy
         self._run_strategy_date_index = date_svc.filterDateIndex(self._date_index, frequency=self.frequency)
 
     def _setStrategyInitCash(self):
+        logging.info('setting init cash')
         self._strategy.setInitCash(self.cash)
 
     def _executeOrders(self):
-        pass
+        logging.debug('{}, executing orders'.format(self._id_date))
+        for order in self._orders:
+            delta_cash = self.getDataset().executeOrder(order)
+            self.getDataset().getAsset('cash').updateCash(delta_cash)
+            self.getOrderManager().addOrder(order)
+
 
     def _updateAfterClose(self):
-        pass
+        self.getDataset().updateAfterCloseRecursively()
 
     def _updateAfterExecuteOrders(self):
-        pass
+        self.getDataset().updateAfterExecuteOrdersRecursively()
 
     def _weights2Orders(self):
-        pass
+        # convert weights to orders
+        for asset, weight in self._weights.items():
+            new_order = Order(
+                date = self._id_date, 
+                asset = asset, 
+                money = self._getTotalPosition()*weight - self.getDataset().getAsset(asset).getPositionManager().position 
+                )
+            self._orders.append(new_order)
+
+    def _addOrdersForDelistedAssets(self):
+        # if delisted, then clear all
+        delisted_assets = {asset: asset_obj for asset, asset_obj in self.getDataset().getAllAsset() if asset_obj.isDelisted(self._id_date) and asset_obj.getPositionManager().position}
+
+        for asset in delisted_assets:
+            new_order = Order(
+                date = self._id_date, 
+                asset = asset, 
+                clear_all = 1 
+                )
+            self._orders.append(new_order)
+
+    def _mergeOrders(self):
+        order_dict = {}
+        for order in self._orders:
+            if order.asset not in order_dict or order.clear_all:
+                order_dict[order.asset] = order
+            elif order_dict[order.asset].clear_all:
+                pass
+            else:
+                order_dict[order.asset].money += order.money
+        self._orders = order_dict.values()
+
+
+    def _getTotalPosition(self):
+        return self.getDataset().getPositionManager().position
+
 
     def getDataset(self):
         return self._dataset
@@ -83,36 +126,47 @@ class BackTestManager:
 
     def backtest(self):
         # loop date index
-        for id_date in tqdm(
+        for self._id_date in tqdm(
             self._date_index, 
             desc = 'backtest', 
             unit = 'days', 
             ):
-            logging.debug('backtest: '.format(id_date))
+            logging.debug('backtest: {}'.format(self._id_date))
 
             # 1. run strategy
-            self._dataset, self._weights, self._orders = self._strategy.run(id_date)
+            if self._id_date in self._run_strategy_date_index:
+                logging.debug('{}, run strategy'.format(self._id_date))
+                self._weights, self._orders = self._strategy.run(self._id_date)
 
-            # 2. convert weights to orders
-            self._weights2Orders()
+                # update dataset, beacuse strategy has authority to add asset
+                self._dataset = self._strategy.getDataset()
 
-            # 3. update daily returns and nav
+            # 2. update daily returns and nav
+            logging.debug('{}, update after close'.format(self._id_date))
             self._updateAfterClose()
 
+            # 3. convert weights to orders
+            logging.debug('{}, convert orders'.format(self._id_date))
+            self._weights2Orders()
+            self._addOrdersForDelistedAssets()
+            self._mergeOrders()
+
             # 4. execute orders
+            logging.debug('{}, execute orders'.format(self._id_date))
             self._executeOrders()
 
             # 5. update return rate and weight
+            logging.debug('{}, update after execute orders'.format(self._id_date))
             self._updateAfterExecuteOrders()
 
-# test
-from svc.raw_data_svc.lxw_winddb_raw_data_svc.lxw_winddb_raw_data_svc import LxwWinddbRawDataSvc as RawDataSvc
-raw_data_svc = RawDataSvc()
-date_svc.setTradeDays(raw_data_svc.getTradeDays())
+# # test
+# from svc.raw_data_svc.lxw_winddb_raw_data_svc.lxw_winddb_raw_data_svc import LxwWinddbRawDataSvc as RawDataSvc
+# raw_data_svc = RawDataSvc()
+# date_svc.setTradeDays(raw_data_svc.getTradeDays())
 
-strategy = object()
-btm = BackTestManager(strategy, {})
-btm.backtest()
+# strategy = object()
+# btm = BackTestManager(strategy, {})
+# btm.backtest()
 
 
         

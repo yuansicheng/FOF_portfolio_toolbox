@@ -37,7 +37,7 @@ class AssetPositionManager(PositionManagerBase):
         input: an order
         output: a float means how much money you cost, - for buy and + for sell
         '''
-        if order == 'clear_all':
+        if order.clear_all:
             delta_cash, execute_money, cost = self._clearAll()
             order.clear_all = 1
         elif order.money >= 0:

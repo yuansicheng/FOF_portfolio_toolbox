@@ -28,6 +28,7 @@ class DateSvc(Singleton):
     # api
 
     def setTradeDays(self, trade_days):
+        logging.info('DateSvc: set trade days')
         self._trade_days = trade_days
         self._trade_days = pd.to_datetime(self._trade_days)
         self._trade_days.index = self._trade_days.values
@@ -64,7 +65,7 @@ class DateSvc(Singleton):
     def getIndexWithWindow(self, id_date, window):   
         assert self.getAllTradeDays()[0] < pd.to_datetime(id_date) < self.getAllTradeDays()[-1], 'id_date {} out of range'.format(id_date)
         # drop id_date
-        index = self.getAllTradeDays().loc[:id_date].iloc[:-1]
+        index = self.getAllTradeDays().loc[:id_date]
         assert index.shape[0] >= window, 'do not have enough date for window'
         return index.iloc[-window:]
 

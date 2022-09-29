@@ -57,13 +57,15 @@ class Group(AssetBase):
             all_group.update(group.getAllGroup(is_top=False, preffix=key))
         return all_group
 
-    def getAllAsset(self, preffix='', pop_cash=False):
+    def getAllAsset(self, preffix='', ignore_cash=False, id_date=None):
         # dfs
         all_asset = {self._updatePreffix(preffix, name): asset for name, asset in self.getChildAsset().items()}
         for group in self.getChildGroup().values():
             all_asset.update(group.getAllAsset(self._updatePreffix(preffix, group.getName())))
-        if pop_cash and 'cash' in all_asset:
+        if ignore_cash and 'cash' in all_asset:
             all_asset.pop('cash')
+        if id_date:
+            all_asset = {asset: asset_obj for asset, asset_obj in all_asset.items() if asset_obj.isTradable(id_date)}
         return all_asset
 
     def getGroup(self, group_path):
@@ -90,6 +92,40 @@ class Group(AssetBase):
             group.setIdDate(id_date)
         for asset in self.getAllAsset().values():
             asset.setIdDate(id_date, *args)
+
+    def updateAfterCloseRecursively(self):        
+        for asset in self.getAllAsset().values():
+            asset.updateAfterClose()
+        for group in self.getAllGroup().values():
+            group.updateAfterClose()
+
+        self.updateWeightRecursively()
+
+    def updateAfterExecuteOrdersRecursively(self):
+        for asset in self.getAllAsset().values():
+            asset.updateAfterExecuteOrders()
+        for group in self.getAllGroup().values():
+            group.updateAfterExecuteOrders()
+
+        self.updateWeightRecursively()
+
+    def updateWeightRecursively(self):
+        total = self.getPositionManager().position
+        for asset in self.getAllAsset().values():
+            asset.updateWeight(total)
+        for group in self.getAllGroup().values():
+            group.updateWeight(total)
+
+    def updateAfterClose(self):
+        assert not self.getPositionManager() is None
+        self.getPositionManager().updateAfterClose(self.getAllAsset())
+
+    def updateAfterExecuteOrders(self):
+        assert not self.getPositionManager() is None
+        self.getPositionManager().updateAfterExecuteOrders(self.getAllAsset())
+
+        
+
 
 
 

@@ -75,7 +75,8 @@ class Asset(AssetBase):
 
     def executeOrder(self, order):
         assert not self.getPositionManager() is None
-        self.getPositionManager().executeOrder(order, transection_cost=self._transection_cost)
+        if self.isTradable(order.date):
+            self.getPositionManager().executeOrder(order, transection_cost=self._transection_cost)
 
     def updateAfterClose(self):
         assert not self.getPositionManager() is None
@@ -84,8 +85,6 @@ class Asset(AssetBase):
     def updateAfterExecuteOrders(self):
         assert not self.getPositionManager() is None
         self.getPositionManager().updateAfterExecuteOrders(self._raw_return.loc[self._id_date])
-    
-
 
     
 

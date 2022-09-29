@@ -48,7 +48,7 @@ class LxwWinddbLocalRawDataSvc(Singleton):
         if not os.path.isfile(table_file):
             warnings.warn('{} not found, skip it'.format(table_file))
             return None
-        print('loading {} from local_db'.format(table))
+        logging.debug('loading {} from local_db'.format(table))
         if table in self._local_db_config['nav_tables']:
             columns = self._local_db_config['nav_tables'][table]
             self._tables[table] = LocalNavTable(

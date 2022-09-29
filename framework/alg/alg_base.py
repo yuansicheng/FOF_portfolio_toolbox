@@ -15,7 +15,8 @@ class AlgBase:
     def getName(self):
         return self._name
 
-    def setArgs(self, args):       
+    def setArgs(self, args): 
+        logging.info('alg {}: init args'.format(self.getName()))      
         self._args = args
         for k, v in self._args.items():
             setattr(self, k, v)

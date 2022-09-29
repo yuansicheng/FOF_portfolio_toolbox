@@ -21,6 +21,8 @@ class AssetBase:
 
     def setIdDate(self, id_date):
         self._id_date = id_date
+        if self.getPositionManager():
+            self.getPositionManager().setIdDate(id_date)
 
     def setPositionManager(self, position_manager):
         self._position_manager = position_manager
@@ -49,6 +51,9 @@ class AssetBase:
 
     def updateAfterExecuteOrders(self, *args, **kwargs):
         raise NotImplementedError
+
+    def updateWeight(self, total):
+        return self.getPositionManager().updateWeight(total)
 
     
 
