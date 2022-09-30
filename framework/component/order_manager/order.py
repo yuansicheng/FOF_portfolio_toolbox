@@ -32,7 +32,7 @@ class Order:
 
         assert self.date
         assert self.asset
-        assert not np.isnan(self.money) or self.clear_all
+        # assert not np.isnan(self.money) or self.clear_all
 
     def print(self):
         print('this is an order: ')

@@ -29,7 +29,7 @@ class OrderManager:
         for column in self._columns:
             self._historical_data_manager.addColumn(column)
 
-            self._index = 0
+        self._index = 0
 
     def getAllOrders(self):
         return self._historical_data_manager.getAllData()
