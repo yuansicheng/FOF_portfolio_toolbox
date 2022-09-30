@@ -28,17 +28,19 @@ class GroupPositionManager(PositionManagerBase):
     def updateAfterClose(self, all_asset):
         new_position = self.getAssetSum(all_asset, 'position')
 
-        # shares donot change
+        # shares donot change, if not shares, init it
         # update nav and position
-        self.nav *= new_position / self.position
+        if not self.shares:
+            self.shares = new_position
+        self.nav *= new_position / self.position if self.position else self.nav
         self.position = new_position
 
-    def updateAfterOrders(self, all_asset):
+    def updateAfterExecuteOrders(self, all_asset):
         for key in [           
             'weight', # 权重
             'transection_cost', # 总交易成本
             'investment', # 投资
-            'hodlding_return', # 持有收益 = 仓位-总投资
+            'holding_return', # 持有收益 = 仓位-总投资
             'historical_return', # 历史收益，执行卖出操作后累加
             'total_return', # 总收益 = 持有收益 + 历史收益 - 交易成本
             ]:

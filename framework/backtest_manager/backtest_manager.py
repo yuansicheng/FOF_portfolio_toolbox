@@ -67,11 +67,18 @@ class BackTestManager:
         self._strategy.setInitCash(self.cash)
 
     def _executeOrders(self):
-        logging.debug('{}, executing orders'.format(self._id_date))
         for order in self._orders:
-            delta_cash = self.getDataset().executeOrder(order)
+            # print('order before')
+            # order.print()
+            delta_cash = self.getDataset().getAsset(order.asset).executeOrder(order)
             self.getDataset().getAsset('cash').updateCash(delta_cash)
             self.getOrderManager().addOrder(order)
+            # print('order after')
+            # order.print()
+
+        # clear orders and weights
+        self._orders = []
+        self._weights = {}
 
 
     def _updateAfterClose(self):
@@ -86,13 +93,14 @@ class BackTestManager:
             new_order = Order(
                 date = self._id_date, 
                 asset = asset, 
-                money = self._getTotalPosition()*weight - self.getDataset().getAsset(asset).getPositionManager().position 
+                money = self._getTotalPosition()*weight - self.getDataset().getAsset(asset).getPositionManager().position, 
+                clear_all = 0
                 )
             self._orders.append(new_order)
 
     def _addOrdersForDelistedAssets(self):
         # if delisted, then clear all
-        delisted_assets = {asset: asset_obj for asset, asset_obj in self.getDataset().getAllAsset() if asset_obj.isDelisted(self._id_date) and asset_obj.getPositionManager().position}
+        delisted_assets = {asset: asset_obj for asset, asset_obj in self.getDataset().getAllAsset().items() if asset_obj.isDelisted(self._id_date) and asset_obj.getPositionManager().position}
 
         for asset in delisted_assets:
             new_order = Order(
@@ -111,7 +119,7 @@ class BackTestManager:
                 pass
             else:
                 order_dict[order.asset].money += order.money
-        self._orders = order_dict.values()
+        self._orders = list(order_dict.values())
 
 
     def _getTotalPosition(self):
@@ -133,7 +141,12 @@ class BackTestManager:
             ):
             logging.debug('backtest: {}'.format(self._id_date))
 
-            # 1. run strategy
+            # 1. update daily returns and nav
+            self._strategy.setIdDate(self._id_date)
+            logging.debug('{}, update after close'.format(self._id_date))
+            self._updateAfterClose()
+
+            # 2. run strategy
             if self._id_date in self._run_strategy_date_index:
                 logging.debug('{}, run strategy'.format(self._id_date))
                 self._weights, self._orders = self._strategy.run(self._id_date)
@@ -141,19 +154,15 @@ class BackTestManager:
                 # update dataset, beacuse strategy has authority to add asset
                 self._dataset = self._strategy.getDataset()
 
-            # 2. update daily returns and nav
-            logging.debug('{}, update after close'.format(self._id_date))
-            self._updateAfterClose()
+                # 3. convert weights to orders
+                logging.debug('{}, convert orders'.format(self._id_date))
+                self._weights2Orders()
+                self._addOrdersForDelistedAssets()
+                self._mergeOrders()
 
-            # 3. convert weights to orders
-            logging.debug('{}, convert orders'.format(self._id_date))
-            self._weights2Orders()
-            self._addOrdersForDelistedAssets()
-            self._mergeOrders()
-
-            # 4. execute orders
-            logging.debug('{}, execute orders'.format(self._id_date))
-            self._executeOrders()
+                # 4. execute orders
+                logging.debug('{}, execute orders'.format(self._id_date))
+                self._executeOrders()
 
             # 5. update return rate and weight
             logging.debug('{}, update after execute orders'.format(self._id_date))

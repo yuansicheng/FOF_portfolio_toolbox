@@ -21,6 +21,6 @@ class CashPositionManager(AssetPositionManager):
         if delta_cash >= 0:
             self._buy(delta_cash, transection_cost)
         else:
-            self._sell(delta_cash, transection_cost)
+            self._sell(-delta_cash, transection_cost)
 
     

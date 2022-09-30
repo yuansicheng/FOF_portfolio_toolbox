@@ -34,6 +34,8 @@ class StrategyBase(AlgBase):
         # init dataset
         self._initDataset()
 
+        self._id_date = None
+
     def setArgsForAlgs(self, args):
         assert isinstance(args, dict)
         for alg_name, alg in self._alg_dict.items():
@@ -63,6 +65,10 @@ class StrategyBase(AlgBase):
 
     def getDataset(self):
         return self._dataset
+
+    def setIdDate(self, id_date, *args):
+        self._id_date = id_date
+        self.getDataset().setIdDateRecursively(id_date, *args)
 
     def run(self, id_date):
         '''

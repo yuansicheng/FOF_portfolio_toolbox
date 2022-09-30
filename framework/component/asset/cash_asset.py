@@ -32,11 +32,18 @@ class CashAsset(Asset):
         self.getPositionManager().updateCash(delta_cash, transection_cost=self._transection_cost)
 
     def updateAfterClose(self):
-        assert not self.getPositionManager() is None
+        assert self.getPositionManager() 
         self.getPositionManager().updateAfterClose(self._daily_yield)
 
     def setIdDate(self, id_date, *args):
         self._id_date = id_date
+    
+    # cash is always tradable
+    def isTradable(self, id_date):
+        return True
+
+    def isDelisted(self, id_date):
+        return False
 
 # # test
 # ca = CashAsset()

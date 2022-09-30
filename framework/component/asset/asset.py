@@ -41,13 +41,15 @@ class Asset(AssetBase):
     def setRawNavData(self, raw_nav_data):
         self._raw_nav_data = date_svc.formatIndex(raw_nav_data)
         self._raw_return = self._raw_nav_data / self._raw_nav_data.shift() - 1
+        self._raw_return.fillna(1, inplace=True)
 
     def getRawNavData(self):
         return self._raw_nav_data
 
     def setIdDate(self, id_date, *args):
         super().setIdDate(id_date)
-        self.setUsableNavData(id_date, *args)
+        if args:
+            self.setUsableNavData(id_date, *args)
 
     def getIdDate(self):
         return self._id_date
@@ -76,7 +78,8 @@ class Asset(AssetBase):
     def executeOrder(self, order):
         assert not self.getPositionManager() is None
         if self.isTradable(order.date):
-            self.getPositionManager().executeOrder(order, transection_cost=self._transection_cost)
+            return self.getPositionManager().executeOrder(order, transection_cost=self._transection_cost)
+        return 0
 
     def updateAfterClose(self):
         assert not self.getPositionManager() is None
@@ -84,7 +87,7 @@ class Asset(AssetBase):
 
     def updateAfterExecuteOrders(self):
         assert not self.getPositionManager() is None
-        self.getPositionManager().updateAfterExecuteOrders(self._raw_return.loc[self._id_date])
+        self.getPositionManager().updateAfterExecuteOrders()
 
     
 

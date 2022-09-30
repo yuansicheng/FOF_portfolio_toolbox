@@ -46,6 +46,9 @@ class AssetBase:
     def copy(self):
         return deepcopy(self)
 
+    def updateHistoricalData(self):
+        self.getPositionManager().updateHistoricalData()
+
     def updateAfterClose(self, *args, **kwargs):
         raise NotImplementedError
 

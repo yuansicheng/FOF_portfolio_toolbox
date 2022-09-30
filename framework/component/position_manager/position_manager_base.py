@@ -26,8 +26,8 @@ class PositionManagerBase:
             'weight', # 权重
             'transection_cost', # 总交易成本
             'investment', # 投资
-            'hodlding_return', # 持有收益 = 仓位-总投资
-            'hodlding_yield', # 持有收益率 = 持有收益/总投资
+            'holding_return', # 持有收益 = 仓位-总投资
+            'holding_yield', # 持有收益率 = 持有收益/总投资
             'historical_return', # 历史收益，执行卖出操作后累加
             'total_return', # 总收益 = 持有收益 + 历史收益 - 交易成本
             ]
@@ -37,6 +37,8 @@ class PositionManagerBase:
     def addPositionData(self, name, init_value=0):
         setattr(self, name, init_value)
         self._historical_data_manager.addColumn(name)
+        if name not in self._columns:
+            self._columns.append(name)
 
     def deletePositionData(self, name):
         delattr(self, name)
@@ -55,6 +57,8 @@ class PositionManagerBase:
         self._id_date = id_date
 
     def updateHistoricalData(self):
+        # logging.debug([getattr(self, name) for name in self._columns])
+        # logging.debug(self._historical_data_manager._historical_data.columns)
         self._historical_data_manager.addData([getattr(self, name) for name in self._columns], index=self._id_date)
 
     def updateAfterClose(self, *args, **kwargs):
@@ -68,8 +72,10 @@ class PositionManagerBase:
 
 
 
-# test
+# # test
 # pmb = PositionManagerBase()
+# pmb.setIdDate('000')
+# pmb.updateHistoricalData()
 # print(pmb.getHistoricalData())
     
         

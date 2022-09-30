@@ -38,7 +38,10 @@ class OrderManager:
         order_data = [getattr(order, column) for column in self._columns[:-1]]
         # save other columns as a str
         other_columns = [column for column in order._columns if column not in self._columns]
-        order_data.append({k:v for k,v in other_columns}.__str__())
+        if not other_columns:
+            order_data.append('')
+        else:
+            order_data.append({k:v for k,v in other_columns}.__str__())
         self._historical_data_manager.addData(order_data, index=self._index)
 
         self._index += 1

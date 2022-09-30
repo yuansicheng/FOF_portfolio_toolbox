@@ -22,9 +22,8 @@ class AssetPositionManager(PositionManagerBase):
         self.position *= (1 + daily_yield)
         self.updateReturns()
 
-    def updateAfterExecuteOrders(self, total):
-        # 执行订单后, 更新权重和收益率
-        self.updateWeight(total)
+    def updateAfterExecuteOrders(self):
+        # 执行订单后, 更新收益率
         self.updateReturns()
 
     def updateReturns(self):
@@ -38,8 +37,7 @@ class AssetPositionManager(PositionManagerBase):
         output: a float means how much money you cost, - for buy and + for sell
         '''
         if order.clear_all:
-            delta_cash, execute_money, cost = self._clearAll()
-            order.clear_all = 1
+            delta_cash, execute_money, cost = self._clearAll(transection_cost)
         elif order.money >= 0:
             delta_cash, execute_money, cost = self._buy(order.money, transection_cost)
         else:
@@ -62,6 +60,7 @@ class AssetPositionManager(PositionManagerBase):
         3、计算投资,投资增加 money - 交易成本
         4、返回 -money + 交易成本,即执行订单使用的现金、订单金额、交易成本
         '''
+        # logging.debug('buy {}'.format(money))
         # 1
         cost = money * transection_cost
         self.transection_cost += cost
@@ -86,18 +85,19 @@ class AssetPositionManager(PositionManagerBase):
         b、卖出金额大于仓位
             tbd
         '''
+        # logging.debug('sell {}'.format(money))
         if money <= self.position:
             # 1
             cost = money * transection_cost
             self.transection_cost += cost
             
-            frac = money / self.investment
+            frac = money / self.position
             # 2
             self.investment -= frac * self.investment
             # 3
-            self.historical_return += frac * self.hodlding_return
+            self.historical_return += frac * self.holding_return
             # 4
-            self.holding_return -= frac * self.hodlding_return
+            self.holding_return -= frac * self.holding_return
             # 5
             self.position -= money
             # 6
@@ -106,6 +106,7 @@ class AssetPositionManager(PositionManagerBase):
             raise NotImplementedError
 
     def _clearAll(self, transection_cost):
+        # logging.debug('clear all')
         return self._sell(self.position, transection_cost)
 
 # # test

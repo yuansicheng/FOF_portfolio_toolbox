@@ -108,6 +108,7 @@ class Group(AssetBase):
             group.updateAfterExecuteOrders()
 
         self.updateWeightRecursively()
+        self.updateHistoricalDataRecursively()
 
     def updateWeightRecursively(self):
         total = self.getPositionManager().position
@@ -115,6 +116,12 @@ class Group(AssetBase):
             asset.updateWeight(total)
         for group in self.getAllGroup().values():
             group.updateWeight(total)
+
+    def updateHistoricalDataRecursively(self):
+        for asset in self.getAllAsset().values():
+            asset.updateHistoricalData()
+        for group in self.getAllGroup().values():
+            group.updateHistoricalData()
 
     def updateAfterClose(self):
         assert not self.getPositionManager() is None
