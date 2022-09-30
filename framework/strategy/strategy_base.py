@@ -72,7 +72,7 @@ class StrategyBase(AlgBase):
 
     def run(self, id_date):
         '''
-        return dataset, weights, orders
+        return weights, orders
         '''
         raise NotImplementedError
 
