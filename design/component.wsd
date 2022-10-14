@@ -1,0 +1,151 @@
+@startuml
+scale 8192*8192
+
+package asset{
+    class AssetBase
+    class Group
+    class Asset
+    class CashAsset
+}
+
+package historical_data_manager{
+    class HistoricalDataManager
+}
+
+package order_manager{
+    class Order
+    class OrderManager
+}
+
+package position_manager{
+    class PositionManagerBase
+    class GroupPositionManager
+    class AssetPositionManager
+    class CashPositionManager
+}
+
+' ------------------------------------------
+
+class AssetBase{
+    - _name
+    - _id_date
+    - _position_manager
+    + setIdDate()
+    + setPositionManager()
+    + getPositionManager()
+    + print()
+    + getName()
+    + updateHistoricalData()
+    + updateAfterClose()
+    + updateAfterExecuteOrders()
+    + updateWeight()
+}
+
+class Group{
+    - _child_group
+    - _child_asset
+    + getChildGroup()
+    + getChildAsset()
+    + addChildGroup()
+    + addChildAsset()
+    + getAllGroup()
+    + getAllAsset()
+    + getGroup()
+    + getAsset()
+    + setIdDateRecursively()
+    + updateAfterCloseRecursively()
+    + updateAfterExecuteOrdersRecursively()
+    + updateWeightRecursively()
+    + updateHistoricalDataRecursively()
+}
+
+class Asset{
+    - _raw_nav_data
+    - _raw_return
+    + setTransectionRate()
+    + getTransectionRate()
+    + setRawNavData()
+    + getRawNavData()
+    + setIdDate()
+    + getIdDate()
+    + getUsableNavData()
+    + getUsableReturnData()
+    + isTradable()
+    + isDelisted()
+    + getAge()
+    + executeOrder()
+}
+
+class CashAsset{
+    + updateCash()
+}
+
+class HistoricalDataManager{
+    - _historical_data
+    + addColumn()
+    + addData()
+    + getAllData()
+    + getData()
+}
+
+class Order{
+    + date 
+    + asset
+    + money
+    + executed
+    + execute_money
+    + transection_cost
+    + clear_all
+    + orther
+    + print()
+}
+
+class OrderManager{
+    - _historical_data_manager
+    + getAllOrders()
+    + addOrder()
+}
+
+class PositionManagerBase{
+    - _historical_data_manager
+    - _id_date
+    + addPositionData()
+    + deletePositionData()
+    + getHistoricalData()
+    + getData()
+    + getIdDate()
+    + setIdDate()
+    + updateHistoricalData()
+    + updateAfterClose()
+    + updateAfterExecuteOrders()
+    + updateWeight()
+}
+
+class GroupPositionManager{
+
+}
+
+class AssetPositionManager{
+    - _transection_rate
+    + setTransectionRate()
+}
+
+class CashPositionManager{
+    + updateCash()
+}
+
+Group ..|> AssetBase
+Asset ..|> AssetBase
+CashAsset ..|> Asset
+
+GroupPositionManager ..|> PositionManagerBase
+AssetPositionManager ..|> PositionManagerBase
+CashPositionManager ..|> AssetPositionManager
+
+PositionManagerBase "0/1" --o "1" AssetBase
+HistoricalDataManager "1" --o "1" PositionManagerBase
+
+HistoricalDataManager "1" --o "1" OrderManager
+
+
+@enduml
