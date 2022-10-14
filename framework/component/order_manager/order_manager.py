@@ -11,21 +11,18 @@ component_path = os.path.join(os.path.dirname(__file__), '..')
 if component_path not in sys.path:
     sys.path.append(component_path)
 
+this_path = os.path.dirname(__file__)
+if this_path not in sys.path:
+    sys.path.append(this_path)
+
 from historical_data_manager.historical_data_manager import HistoricalDataManager
+
+from order import Order
 
 class OrderManager:
     def __init__(self) -> None:
         self._historical_data_manager = HistoricalDataManager()
-        self._columns = [
-            'date', 
-            'asset', 
-            'money',  
-            'executed', 
-            'execute_money', 
-            'transection_cost', 
-            'clear_all', 
-            'orther', 
-        ]
+        self._columns = Order(date='dummy', asset='dummy', clear_all=1)._columns
         for column in self._columns:
             self._historical_data_manager.addColumn(column)
 
@@ -35,13 +32,7 @@ class OrderManager:
         return self._historical_data_manager.getAllData()
 
     def addOrder(self, order):
-        order_data = [getattr(order, column) for column in self._columns[:-1]]
-        # save other columns as a str
-        other_columns = [column for column in order._columns if column not in self._columns]
-        if not other_columns:
-            order_data.append('')
-        else:
-            order_data.append({k:v for k,v in other_columns}.__str__())
+        order_data = [getattr(order, column) for column in self._columns]
         self._historical_data_manager.addData(order_data, index=self._index)
 
         self._index += 1

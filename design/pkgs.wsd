@@ -1,19 +1,25 @@
 @startmindmap
 scale 8192*8192
 
-* FOF_portfolio
-    ** framework
-        *** svc
-            **** raw_data_svc
-            **** date_svc
-            **** constant_svc
-            **** yaml_svc
-            **** indicator_svc
-        *** component
-        *** alg
-    ** example
-        *** svc_examples
-    ** local_db
-    ** design
+* FOF_PORTFOLIO_TOOLBOX
+    ** framework-框架
+        *** svc-服务\n将常用操作封装为单例类全局使用
+            **** db_connector-数据库连接
+            **** raw_data_svc-数据加载
+            **** date_svc-日期相关操作
+            **** constant_svc-常数加载
+            **** yaml_svc-读取yaml配置文件
+            **** indicator_svc-计算常用指标
+        *** component-组件
+            **** asset-资产组和资产类
+            **** historical_data_manager-历史数据管理器
+            **** order_manager-订单类和订单管理器
+            **** position_manager-仓位管理器
+        *** alg-算法，封装常用的操作
+        *** strategy-单期策略，算法的集合，给定日期输出目标权重和订单
+        *** backtest_manager-回测模块，对特定策略执行回测
+    ** example-示例
+    ** local_db-本地数据库
+    ** design-设计图
 
 @endmindmap

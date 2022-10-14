@@ -29,14 +29,11 @@ class CashAsset(Asset):
 
     def updateCash(self, delta_cash):
         assert self.getPositionManager()
-        self.getPositionManager().updateCash(delta_cash, transection_cost=self._transection_cost)
+        self.getPositionManager().updateCash(delta_cash)
 
     def updateAfterClose(self):
         assert self.getPositionManager() 
         self.getPositionManager().updateAfterClose(self._daily_yield)
-
-    def setIdDate(self, id_date, *args):
-        self._id_date = id_date
     
     # cash is always tradable
     def isTradable(self, id_date):

@@ -17,6 +17,8 @@ from import_func import getSvc
 from component.order_manager.order_manager import OrderManager
 from component.order_manager.order import Order
 
+from copy import deepcopy
+
 date_svc = getSvc('DateSvc')
 
 class BackTestManager:
@@ -67,14 +69,18 @@ class BackTestManager:
         self._strategy.setInitCash(self.cash)
 
     def _executeOrders(self):
+        logging.debug(self.getDataset().getAsset('cash').getPositionManager().position)
         for order in self._orders:
             # print('order before')
             # order.print()
-            delta_cash = self.getDataset().getAsset(order.asset).executeOrder(order)
-            self.getDataset().getAsset('cash').updateCash(delta_cash)
+            self.getDataset().getAsset(order.asset).executeOrder(order)
+            self.getDataset().getAsset('cash').updateCash(order.delta_cash)
             self.getOrderManager().addOrder(order)
             # print('order after')
             # order.print()
+            logging.debug((order.option, order.delta_cash))
+            logging.debug(self.getDataset().getAsset('cash').getPositionManager().position)
+
 
         # clear orders and weights
         self._orders = []
@@ -88,43 +94,60 @@ class BackTestManager:
         self.getDataset().updateAfterExecuteOrdersRecursively()
 
     def _weights2Orders(self):
+        # add asset which not assigned
+        if self._weights:
+            self._weights.update({asset: 0 for asset in self.getDataset().getAllAsset(ignore_cash=True, id_date=self._id_date) if asset not in self._weights})
         # convert weights to orders
+        open_flag = False
         for asset, weight in self._weights.items():
-            new_order = Order(
+            target_position = self.getDataset().getPositionManager().truth_position * weight
+            asset_obj = self._getAssetObj(asset)
+            asset_position_manager = asset_obj.getPositionManager()
+            tmp_order = Order(
                 date = self._id_date, 
                 asset = asset, 
-                money = self._getTotalPosition()*weight - self.getDataset().getAsset(asset).getPositionManager().position, 
-                clear_all = 0
-                )
-            self._orders.append(new_order)
+            )
+            # clear_all
+            if ((not weight) and asset_position_manager.position) or asset_position_manager.position * target_position < 0:
+                tmp_order_clear_all = deepcopy(tmp_order)
+                tmp_order_clear_all.option = 'clear_all'
+                self._orders.append(tmp_order_clear_all)
+                if not weight:
+                    continue
+                else:
+                    open_flag = True
+
+            # open
+            if not asset_position_manager.status or open_flag:
+                tmp_order.option = 'buy'
+                tmp_order.buy_money = abs(target_position) * asset_position_manager.margin_ratio
+                tmp_order.direction = target_position / abs(target_position)
+                open_flag = False
+            # buy
+            elif abs(target_position) >= abs(asset_position_manager.position):
+                tmp_order.option = 'buy'
+                tmp_order.buy_money = abs(target_position-asset_position_manager.position) * asset_position_manager.margin_ratio
+            # sell
+            else:
+                tmp_order.option = 'sell'
+                tmp_order.sell_proportion = 1 - abs(target_position / asset_position_manager.position)
+
+            self._orders.append(tmp_order)
+            
 
     def _addOrdersForDelistedAssets(self):
         # if delisted, then clear all
-        delisted_assets = {asset: asset_obj for asset, asset_obj in self.getDataset().getAllAsset().items() if asset_obj.isDelisted(self._id_date) and asset_obj.getPositionManager().position}
+        delisted_assets = {asset: asset_obj for asset, asset_obj in self.getDataset().getAllAsset().items() if asset_obj.isDelisted(self._id_date) and self._getAssetObj(asset).getPositionManager().position}
 
         for asset in delisted_assets:
-            new_order = Order(
+            self._orders.append(Order(
                 date = self._id_date, 
                 asset = asset, 
                 clear_all = 1 
-                )
-            self._orders.append(new_order)
+            ))
 
-    def _mergeOrders(self):
-        order_dict = {}
-        for order in self._orders:
-            if order.asset not in order_dict or order.clear_all:
-                order_dict[order.asset] = order
-            elif order_dict[order.asset].clear_all:
-                pass
-            else:
-                order_dict[order.asset].money += order.money
-        self._orders = list(order_dict.values())
-
-
-    def _getTotalPosition(self):
-        return self.getDataset().getPositionManager().position
-
+    def _getAssetObj(self, asset):
+        return self.getDataset().getAsset(asset)
 
     def getDataset(self):
         return self._dataset
@@ -158,7 +181,6 @@ class BackTestManager:
                 logging.debug('{}, convert orders'.format(self._id_date))
                 self._weights2Orders()
                 self._addOrdersForDelistedAssets()
-                self._mergeOrders()
 
                 # 4. execute orders
                 logging.debug('{}, execute orders'.format(self._id_date))

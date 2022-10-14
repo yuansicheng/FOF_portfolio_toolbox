@@ -22,14 +22,20 @@ class PositionManagerBase:
         self._id_date = None
 
         self._columns = [ 
-            'position', # 仓位，持有资产的总价值           
+            'position', # 仓位，持有资产的总价值  
+            'truth_position', # 真实仓位，可变现资产    
+            'cost_per_unit', # 单位份额持仓成本     
             'weight', # 权重
-            'transection_cost', # 总交易成本
+            'truth_weight', # 真实权重，可变现资产的权重
+            'margin', # 保证金
             'investment', # 投资
-            'holding_return', # 持有收益 = 仓位-总投资
+            'holding_return', # 持有收益 = 仓位-投资-持有管理费-持有交易成本
             'holding_yield', # 持有收益率 = 持有收益/总投资
             'historical_return', # 历史收益，执行卖出操作后累加
-            'total_return', # 总收益 = 持有收益 + 历史收益 - 交易成本
+            'total_return', # 总收益
+            'transection_cost', # 交易成本
+            'nav', # 单位净值
+            'shares', #持有份额
             ]
         for column in self._columns:
             self.addPositionData(column, 0)
@@ -67,8 +73,10 @@ class PositionManagerBase:
     def updateAfterExecuteOrders(self, *args, **kwargs):
         raise NotImplementedError
 
-    def updateWeight(self, total):
+    def updateWeight(self, total, truth_total):
         self.weight = self.position / total if total != 0 else 0
+        self.truth_weight = self.truth_position / truth_total if truth_total != 0 else 0
+        
 
 
 

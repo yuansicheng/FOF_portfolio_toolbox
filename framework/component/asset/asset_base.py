@@ -55,8 +55,8 @@ class AssetBase:
     def updateAfterExecuteOrders(self, *args, **kwargs):
         raise NotImplementedError
 
-    def updateWeight(self, total):
-        return self.getPositionManager().updateWeight(total)
+    def updateWeight(self, total, truth_total):
+        return self.getPositionManager().updateWeight(total, truth_total)
 
     
 

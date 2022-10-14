@@ -14,12 +14,33 @@ if this_path not in sys.path:
 from position_manager_base import PositionManagerBase
 
 class AssetPositionManager(PositionManagerBase):
+    '''
+    资产仓位管理器
+    做多/做空，保证金比率
+    适用普通资产/基金/期货
+    '''
     def __init__(self) -> None:
         super().__init__()
+
+        # buy and sell
+        self._transection_rate = [0., 0.]
+
+        # 保证金比率，杠杆率=1/保证金比率
+        self.addPositionData('margin_ratio', init_value=1)
+        # 当前状态：0:无、1:多头、-1:空头
+        self.addPositionData('status', init_value=0)
+
+    def setTransectionRate(self, transection_rate):
+        if isinstance(transection_rate, (int, float)):
+            transection_rate = [transection_rate] * 2
+        self._transection_rate = transection_rate
+
+    def setMarginRatio(self, margin_ratio):
+        self.margin_ratio = margin_ratio
         
-    def updateAfterClose(self, daily_yield):
+    def updateAfterClose(self, nav):
         # 每日收盘后, 计算资产当天收益并加入仓位中
-        self.position *= (1 + daily_yield)
+        self.nav = nav
         self.updateReturns()
 
     def updateAfterExecuteOrders(self):
@@ -27,87 +48,101 @@ class AssetPositionManager(PositionManagerBase):
         self.updateReturns()
 
     def updateReturns(self):
-        self.holding_return = self.position - self.investment
+        self.position = self.nav * self.shares
+        self.holding_return = self.shares * (self.nav - self.cost_per_unit)
+        self.truth_position = self.margin + self.holding_return
         self.holding_yield = self.holding_return / self.investment if self.investment else 0
-        self.total_return = self.holding_return + self.historical_return - self.transection_cost
+        self.total_return = self.holding_return + self.historical_return
 
-    def executeOrder(self, order, transection_cost=0) -> float:
+    def executeOrder(self, order) -> float:
         '''
         input: an order
-        output: a float means how much money you cost, - for buy and + for sell
         '''
-        if order.clear_all:
-            delta_cash, execute_money, cost = self._clearAll(transection_cost)
-        elif order.money >= 0:
-            delta_cash, execute_money, cost = self._buy(order.money, transection_cost)
+        if order.option == 'clear_all':
+            self._clearAll(order)
+        elif order.option == 'buy':
+            if self.status == 0:
+                self._open(order)
+            else:
+                self._buy(order)
+        elif order.option == 'sell':
+            self._sell(order)
         else:
-            delta_cash, execute_money, cost = self._sell(-order.money, transection_cost)
-        
-        # update the order
-        order.executed = 1
-        order.execute_money = execute_money
-        order.transection_cost = cost
+            logging.error('Order Ececuted Error')
 
-        return delta_cash
+    def _open(self, order):
+        '''
+        开仓，先设置状态，再买入
+        '''
+        self.status = order.direction
+        self._buy(order)
 
-
-
-    def _buy(self, money, transection_cost):
+    def _buy(self, order):
         '''
         买入资产
-        1、计算交易成本, 交易成本 = money * transection_cost
-        2、计算仓位,仓位增加 money - 交易成本
-        3、计算投资,投资增加 money - 交易成本
-        4、返回 -money + 交易成本,即执行订单使用的现金、订单金额、交易成本
+        1、投资增加
+        2、扣除交易成本
+        3、计算买入份额
+        4、保证金增加
+        5、计算持仓成本
         '''
-        # logging.debug('buy {}'.format(money))
-        # 1
-        cost = money * transection_cost
-        self.transection_cost += cost
-        tmp = money - cost
+        order.shares_before = self.shares
+        # 1        
+        self.investment += order.buy_money
         # 2
-        self.position += tmp
+        cost = order.buy_money * self._transection_rate[0]
+        self.transection_cost += cost
         # 3
-        self.investment += tmp
+        buy_shares = ((order.buy_money / self.nav) * (1 - self._transection_rate[0]) * self.status) / self.margin_ratio
         # 4
-        return -tmp, money, cost
+        self.margin += order.buy_money - cost
+        # 5
+        if not self.shares:
+            self.cost_per_unit = self.nav
+        else:
+            self.cost_per_unit = abs(self.shares*self.cost_per_unit + buy_shares*self.nav) / abs(self.shares + buy_shares) 
+        self.shares += buy_shares
 
-    def _sell(self, money, transection_cost):
+        order.executed = 1
+        order.delta_cash = -order.buy_money
+        order.transection_cost = cost
+        order.shares_after = self.shares
+
+
+    def _sell(self, order):
         '''
         卖出资产
-        a、卖出金额小于仓位
-            1、计算交易成本, 交易成本 += money * transection_cost
-            2、计算投资,投资减少 money / 仓位 * 投资
-            3、计算历史收益增加 money / 仓位 * 持有收益 
-            4、计算持有收益减少 money / 仓位 * 持有收益  
-            5、计算仓位,仓位减少 money                 
-            6、返回 money - transection_cost, 即执行订单后到账的现金、订单金额、交易成本
-        b、卖出金额大于仓位
-            tbd
+        1、投资减少
+        2、保证金减少
+        3、份额减少
+        4、扣除交易成本 
+        5、历史收益增加      
         '''
-        # logging.debug('sell {}'.format(money))
-        if money <= self.position:
-            # 1
-            cost = money * transection_cost
-            self.transection_cost += cost
-            
-            frac = money / self.position
-            # 2
-            self.investment -= frac * self.investment
-            # 3
-            self.historical_return += frac * self.holding_return
-            # 4
-            self.holding_return -= frac * self.holding_return
-            # 5
-            self.position -= money
-            # 6
-            return money - cost, -money, cost
-        else:
-            raise NotImplementedError
+        order.shares_before = self.shares
+        # 1
+        self.investment *= (1 - order.sell_proportion)
+        # 2
+        self.margin *= (1 - order.sell_proportion)
+        # 3
+        sell_shares = self.shares * order.sell_proportion
+        self.shares -= sell_shares
+        # 4
+        cost = self.nav * sell_shares * self._transection_rate[1]
+        self.transection_cost += cost
+        # 5 
+        self.historical_return += self.holding_return * order.sell_proportion
 
-    def _clearAll(self, transection_cost):
+        order.executed = 1
+        order.delta_cash = self.margin * order.sell_proportion + self.holding_return * order.sell_proportion - cost
+        order.transection_cost = cost
+        order.shares_after = self.shares
+        
+
+    def _clearAll(self, order):
         # logging.debug('clear all')
-        return self._sell(self.position, transection_cost)
+        self.status = 0
+        order.sell_proportion = 1
+        return self._sell(order)
 
 # # test
 # apm = AssetPositionManager()

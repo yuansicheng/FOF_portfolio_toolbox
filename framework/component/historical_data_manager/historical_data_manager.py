@@ -16,7 +16,11 @@ class HistoricalDataManager:
         self._historical_data = pd.DataFrame()
 
     def addColumn(self, column):
+        assert column not in self._historical_data.columns
         self._historical_data[column] = np.nan
+
+    def getColumns(self):
+        return self._historical_data.columns
 
     def addData(self, data, index=None, column=None):
         if index and column:

@@ -31,6 +31,8 @@ class DateSvc(Singleton):
         logging.info('DateSvc: set trade days')
         self._trade_days = trade_days
         self._trade_days = pd.to_datetime(self._trade_days)
+        if not isinstance(self._trade_days, pd.Series):
+            self._trade_days = pd.Series(self._trade_days)
         self._trade_days.index = self._trade_days.values
 
     def formatIndex(self, data):

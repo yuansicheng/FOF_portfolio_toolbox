@@ -10,7 +10,7 @@ import os, sys, argparse, logging
 class AlgBase:
     def __init__(self, name, args=None) -> None:
         self._name = name
-        self._args = args
+        self.setArgs(args)
 
     def getName(self):
         return self._name
@@ -18,8 +18,9 @@ class AlgBase:
     def setArgs(self, args): 
         logging.info('alg {}: init args'.format(self.getName()))      
         self._args = args
-        for k, v in self._args.items():
-            setattr(self, k, v)
+        if args:
+            for k, v in self._args.items():
+                setattr(self, k, v)
 
     def run(self, *args, **kwargs):
         raise NotImplementedError

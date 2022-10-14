@@ -15,16 +15,19 @@ class Order:
     def __init__(self, **kwargs) -> None:
         self._columns = [
             'date', 
-            'asset', 
-            'money',  
+            'asset',
+            'option', 
+            'buy_money', 
+            'direction', 
+            'sell_proportion', 
             'executed', 
-            'execute_money', 
+            'delta_cash', 
             'transection_cost', 
-            'clear_all', 
-            'orther', 
+            'shares_before', 
+            'shares_after', 
         ]
         for column in self._columns:
-            setattr(self, column, np.nan)
+            setattr(self, column, None)
 
         for k, v in kwargs.items():
             if k in self._columns:
@@ -32,7 +35,10 @@ class Order:
 
         assert self.date
         assert self.asset
-        # assert not np.isnan(self.money) or self.clear_all
+        if self.option == 'buy':
+            assert self.buy_price > 0
+        if self.option == 'sell':
+            assert self.sell_proportion
 
     def print(self):
         print('this is an order: ')

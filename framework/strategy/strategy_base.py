@@ -26,7 +26,7 @@ class StrategyBase(AlgBase):
     '''
 
     def __init__(self, name, args={}) -> None:
-        super().__init__(name)
+        super().__init__(name, args)
         self._alg_dict = {}
         self._initAlgDict()
 
@@ -57,6 +57,7 @@ class StrategyBase(AlgBase):
         # add position manager
         if init_position_manager:
             self._dataset.setPositionManager(GroupPositionManager())
+            self._dataset.getPositionManager().setRoot(True)
             self._dataset.getAsset('cash').setPositionManager(CashPositionManager())
 
     def setInitCash(self, init_cash):

@@ -57,11 +57,13 @@ class Group(AssetBase):
             all_group.update(group.getAllGroup(is_top=False, preffix=key))
         return all_group
 
-    def getAllAsset(self, preffix='', ignore_cash=False, id_date=None):
+    def getAllAsset(self, group=None, preffix='', ignore_cash=False, id_date=None):
+        if group:
+            return self.getGroup(group).getAllAsset(preffix=group, ignore_cash=ignore_cash, id_date=id_date)
         # dfs
         all_asset = {self._updatePreffix(preffix, name): asset for name, asset in self.getChildAsset().items()}
         for group in self.getChildGroup().values():
-            all_asset.update(group.getAllAsset(self._updatePreffix(preffix, group.getName())))
+            all_asset.update(group.getAllAsset(preffix=self._updatePreffix(preffix, group.getName())))
         if ignore_cash and 'cash' in all_asset:
             all_asset.pop('cash')
         if id_date:
@@ -112,10 +114,12 @@ class Group(AssetBase):
 
     def updateWeightRecursively(self):
         total = self.getPositionManager().position
+        truth_total = self.getPositionManager().truth_position
+        logging.debug('total: {}, truth_total: {}'.format(total, truth_total))
         for asset in self.getAllAsset().values():
-            asset.updateWeight(total)
+            asset.updateWeight(total, truth_total)
         for group in self.getAllGroup().values():
-            group.updateWeight(total)
+            group.updateWeight(total, truth_total)
 
     def updateHistoricalDataRecursively(self):
         for asset in self.getAllAsset().values():
