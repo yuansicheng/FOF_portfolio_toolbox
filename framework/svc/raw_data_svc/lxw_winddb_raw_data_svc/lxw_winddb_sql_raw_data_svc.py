@@ -38,6 +38,7 @@ class LxwWinddbSqlRawDataSvc(Singleton):
     def _getFullTableByYear(self, table_name, columns):
         data_by_year = []
         years = self._getTableDistinctYears(table_name)
+        print(years)
         for i in tqdm(
             range(len(years)), 
             desc='fetching {}'.format(table_name), 
@@ -76,8 +77,7 @@ class LxwWinddbSqlRawDataSvc(Singleton):
         if not columns:
             columns = self._table_column_svc.getTableColumn(table_name)
         columns = ','.join(columns)
-
-        if row_num < 100000:
+        if row_num < 5000:
             sql = 'SELECT {} from {}'.format(columns, table_name)
             return self.query(sql=sql)
         else:

@@ -73,7 +73,7 @@ class LxwWinddbLocalDbStorage:
 
         # case 1: file exists and not add new columns, update data after last_update_date
         if os.path.isfile(table_file):
-            last_update_date = pd.read_hdf(table_file, key='last_update_date').values[0]
+            last_update_date = pd.read_hdf(table_file, key='last_update_date', engine='python', encoding='utf-8').values[0]
             old_data = pd.read_hdf(table_file, key='data')
             old_columns = old_data.columns
 

@@ -41,6 +41,7 @@ class LxwWinddbTableColumnSvc(Singleton):
         self._setTableColumnDict()
 
     def getTableColumn(self, table_name):
+        table_name = table_name.lower()
         if table_name in self._table_column_dict:
             return self._table_column_dict[table_name]
         else:

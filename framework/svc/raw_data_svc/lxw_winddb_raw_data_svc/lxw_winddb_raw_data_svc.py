@@ -19,6 +19,7 @@ from singleton import Singleton
 
 from lxw_winddb_sql_raw_data_svc import LxwWinddbSqlRawDataSvc as SqlRawDataSvc
 from lxw_winddb_local_raw_data_svc import LxwWinddbLocalRawDataSvc as LocalRawDataSvc
+from lxw_winddb_table_column_svc import LxwWinddbTableColumnSvc
 
 # __all__ = ['raw_data_svc']
 
@@ -29,6 +30,7 @@ class LxwWinddbRawDataSvc(Singleton):
         print('init LxwWinddbRawDataSvc')
         self._sql_raw_data_svc = SqlRawDataSvc()
         self._local_raw_data_svc = LocalRawDataSvc()
+        self._table_column_svc = LxwWinddbTableColumnSvc()
 
     ###########################################
     # api
@@ -46,6 +48,9 @@ class LxwWinddbRawDataSvc(Singleton):
 
     def getFullTable(self, table_name, columns=None):
         # try local first, then query sql
+        table_columns = self._table_column_svc.getTableColumn(table_name)
+        if set(columns) - set(table_columns):
+            return self._sql_raw_data_svc.getFullTable(table_name, columns=columns)
         tmp = self._local_raw_data_svc.getFullTable(table_name, columns=columns)
         if not tmp is None:
             return tmp
