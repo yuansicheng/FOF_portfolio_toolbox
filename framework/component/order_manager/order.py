@@ -17,12 +17,11 @@ class Order:
             'date', 
             'asset',
             'option', 
-            'buy_money', 
-            'direction', 
+            'target_position', 
             'sell_proportion', 
             'executed', 
             'delta_cash', 
-            'transection_cost', 
+            'transaction_cost', 
             'shares_before', 
             'shares_after', 
         ]
@@ -36,7 +35,7 @@ class Order:
         assert self.date
         assert self.asset
         if self.option == 'buy':
-            assert self.buy_price > 0
+            assert self.target_position > 0
         if self.option == 'sell':
             assert self.sell_proportion
 

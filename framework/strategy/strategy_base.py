@@ -38,9 +38,9 @@ class StrategyBase(AlgBase):
 
     def setArgsForAlgs(self, args):
         assert isinstance(args, dict)
-        for alg_name, alg in self._alg_dict.items():
-            if alg_name in args:
-                alg.setArgs(args[alg_name])
+        for k,v in args.items():
+            if k in self._alg_dict:
+                self._alg_dict[k].setArgs(v)
 
     def _initAlgDict(self, *args, **kwargs):
         raise NotImplementedError

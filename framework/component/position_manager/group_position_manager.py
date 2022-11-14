@@ -32,23 +32,24 @@ class GroupPositionManager(PositionManagerBase):
             return sum([abs(getattr(asset.getPositionManager(), key)) for asset in all_asset.values()])
         
     def updateAfterClose(self, all_asset):
-        new_truth_position = self.getAssetSum(all_asset, 'truth_position')
+        last_truth_position = self.truth_position
+        self.updateReturns(all_asset)
 
         # shares donot change, if not shares, init it
         # update nav and position
         if not self.shares:
-            logging.debug('init shares: {}'.format(new_truth_position))
-            self.shares = new_truth_position
-        if not self.nav:
-            self.nav = 1
-        else:
-            self.nav *= new_truth_position / self.truth_position if self.truth_position else self.nav
-        self.truth_position = new_truth_position
+            logging.debug('init shares: {}'.format(self.truth_position))
+            self.shares = self.truth_position
 
-        self.updateReturns(all_asset)
+        if self.isRoot():
+            self.nav = self.truth_position / self.shares if self.shares else 1
+        else:
+            # logging.debug(self.truth_position / last_truth_position)
+            self.nav  = self.nav * (self.truth_position / last_truth_position) if last_truth_position else 1
+
+        
 
     def updateAfterExecuteOrders(self, all_asset):
-        self.truth_position = self.getAssetSum(all_asset, 'truth_position')
         # nav donot change, use margin to calculate
         new_investment = self.getAssetSum(all_asset, 'investment')
         if not self.isRoot():
@@ -56,6 +57,8 @@ class GroupPositionManager(PositionManagerBase):
         self.investment = new_investment
 
         self.updateReturns(all_asset)
+
+
 
     def updateReturns(self, all_asset):
         for key in [    
@@ -70,17 +73,13 @@ class GroupPositionManager(PositionManagerBase):
             'holding_yield', # 持有收益率 = 持有收益/总投资
             'historical_return', # 历史收益，执行卖出操作后累加
             'total_return', # 总收益
-            'transection_cost', # 交易成本
+            'transaction_cost', # 交易成本
             # 'nav', # 单位净值
             # 'shares', #持有份额
             ]:
             setattr(self, key, self.getAssetSum(all_asset, key))
 
-        # # position
-        # self.position = self.getAssetSum({asset:asset_obj for asset,asset_obj in all_asset.items() if asset != 'cash'}, 'position', abs_=True)
-        # # cash donot convert to abs value
-        # if 'cash' in all_asset:
-        #     self.position += all_asset['cash'].getPositionManager().position
+            # self.position = self.getAssetSum(all_asset, 'position', abs_=True)
 
 
         self.holding_yield = self.holding_return / self.margin if self.margin else 0

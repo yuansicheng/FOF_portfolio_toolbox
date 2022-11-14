@@ -78,7 +78,7 @@ class BackTestManager:
             self.getOrderManager().addOrder(order)
             # print('order after')
             # order.print()
-            logging.debug((order.option, order.delta_cash))
+            logging.debug((order.asset, order.option, order.delta_cash))
             logging.debug(self.getDataset().getAsset('cash').getPositionManager().position)
 
 
@@ -117,20 +117,20 @@ class BackTestManager:
                 else:
                     open_flag = True
 
+            tmp_order.target_position = target_position
             # open
             if not asset_position_manager.status or open_flag:
-                tmp_order.option = 'buy'
-                tmp_order.buy_money = abs(target_position) * asset_position_manager.margin_ratio
-                tmp_order.direction = target_position / abs(target_position)
+                tmp_order.option = 'open'               
                 open_flag = False
+
             # buy
             elif abs(target_position) >= abs(asset_position_manager.position):
                 tmp_order.option = 'buy'
-                tmp_order.buy_money = abs(target_position-asset_position_manager.position) * asset_position_manager.margin_ratio
             # sell
             else:
                 tmp_order.option = 'sell'
-                tmp_order.sell_proportion = 1 - abs(target_position / asset_position_manager.position)
+                if not asset_position_manager.status:
+                    continue
 
             self._orders.append(tmp_order)
             
@@ -166,28 +166,28 @@ class BackTestManager:
 
             # 1. update daily returns and nav
             self._strategy.setIdDate(self._id_date)
-            logging.debug('{}, update after close'.format(self._id_date))
+            # logging.debug('{}, update after close'.format(self._id_date)) 
             self._updateAfterClose()
 
             # 2. run strategy
             if self._id_date in self._run_strategy_date_index:
-                logging.debug('{}, run strategy'.format(self._id_date))
+                # logging.debug('{}, run strategy'.format(self._id_date))
                 self._weights, self._orders = self._strategy.run(self._id_date)
 
                 # update dataset, beacuse strategy has authority to add asset
                 self._dataset = self._strategy.getDataset()
 
                 # 3. convert weights to orders
-                logging.debug('{}, convert orders'.format(self._id_date))
+                # logging.debug('{}, convert orders'.format(self._id_date))
                 self._weights2Orders()
                 self._addOrdersForDelistedAssets()
 
                 # 4. execute orders
-                logging.debug('{}, execute orders'.format(self._id_date))
+                # logging.debug('{}, execute orders'.format(self._id_date))
                 self._executeOrders()
 
             # 5. update return rate and weight
-            logging.debug('{}, update after execute orders'.format(self._id_date))
+            # logging.debug('{}, update after execute orders'.format(self._id_date))
             self._updateAfterExecuteOrders()
 
 # # test

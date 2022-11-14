@@ -35,8 +35,9 @@ class CashPositionManager(AssetPositionManager):
             if abs(self.position) >= abs(delta_cash):
                 self._reduce(delta_cash)
             else:
+                target_cash = self.position + delta_cash
                 self._clearAll()
-                self._add(self.position + delta_cash)
+                self._add(target_cash)
         else:
             self._add(delta_cash)
 

@@ -31,17 +31,17 @@ class Asset(AssetBase):
         self._raw_return = None 
         self._raw_data = None
 
-    def setTransectionRate(self, *args, **kwargs):
+    def setTransactionRate(self, *args, **kwargs):
         assert not self.getPositionManager() is None
-        self.getPositionManager().setTransectionRate(*args, **kwargs)
+        self.getPositionManager().settransactionRate(*args, **kwargs)
 
     def setMarginRatio(self, *args, **kwargs):
         assert not self.getPositionManager() is None
         self.getPositionManager().setMarginRatio(*args, **kwargs)
 
-    def getTransectionRate(self):
+    def getTransactionRate(self):
         assert not self.getPositionManager() is None
-        self.getPositionManager()._transection_rate
+        self.getPositionManager()._transaction_rate
 
     def print(self, level=0):
         print('{}asset: {}'.format('\t'*level, self._name))

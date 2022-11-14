@@ -113,7 +113,7 @@ class Group(AssetBase):
         self.updateHistoricalDataRecursively()
 
     def updateWeightRecursively(self):
-        total = self.getPositionManager().position
+        total = self.getPositionManager().truth_position
         truth_total = self.getPositionManager().truth_position
         logging.debug('total: {}, truth_total: {}'.format(total, truth_total))
         for asset in self.getAllAsset().values():

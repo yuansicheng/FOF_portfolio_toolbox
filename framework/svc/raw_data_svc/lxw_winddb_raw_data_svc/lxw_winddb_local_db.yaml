@@ -1,15 +1,16 @@
 tables:
+  - chinamutualfunddescription
+  - chinamutualfundassetportfolio
+  - chinamutualfundsector
+  
   - aindexeodprices
   - chinamutualfundnav
   - ashareeodprices
 
-  - chinamutualfunddescription
-  - chinamutualfundassetportfolio
-  - chinamutualfundsector
 
 local_db_loc:
-  # ../../../../local_db/lxw_winddb
-  C:/Users/yuans/Desktop/lxw_winddb
+  ../../../../local_db/lxw_winddb
+  # C:/Users/yuans/Desktop/lxw_winddb
 
 nav_tables:
   aindexeodprices:

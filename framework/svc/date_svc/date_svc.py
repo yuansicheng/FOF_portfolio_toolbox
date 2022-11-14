@@ -48,7 +48,7 @@ class DateSvc(Singleton):
         found_index = [i for i in index if i in data.index]
         not_found_index =  [i for i in index if i not in data.index]
         if not_found_index:
-            warnings.warn('DateSvc.cutDataWithIndex: index {} not found in data.index'.format(not_found_index))
+            logging.debug('DateSvc.cutDataWithIndex: some index not found in data.index')
         if isinstance(data, pd.Series):
             tmp = pd.Series(index=index, dtype=float)
         else:

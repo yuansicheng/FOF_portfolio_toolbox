@@ -21,11 +21,11 @@ class YamlSvc(Singleton):
             return
         print('init YamlSvc')
 
-    def loadYaml(self, yaml_file):
+    def loadYaml(self, yaml_file, *args, encoding='utf-8', **kwargs):
         assert os.path.isfile(yaml_file) and yaml_file.endswith('.yaml')
         # if using py3.8, Loader should be passed
-        with open(yaml_file) as f:
+        with open(yaml_file, encoding=encoding) as f:
             try:            
-                return yaml.load(f, Loader=yaml.FullLoader)
+                return yaml.load(f, *args, Loader=yaml.FullLoader, **kwargs)
             except:
-                return yaml.load(f)
+                return yaml.load(f, *args, **kwargs)

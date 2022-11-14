@@ -33,7 +33,7 @@ class PositionManagerBase:
             'holding_yield', # 持有收益率 = 持有收益/总投资
             'historical_return', # 历史收益，执行卖出操作后累加
             'total_return', # 总收益
-            'transection_cost', # 交易成本
+            'transaction_cost', # 交易成本
             'nav', # 单位净值
             'shares', #持有份额
             ]

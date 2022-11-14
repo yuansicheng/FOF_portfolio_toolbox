@@ -39,9 +39,7 @@ class MergeFundRawDataAlg(AlgBase):
             'chinamutualfundsector': ['f_info_windcode', 's_info_sector'], 
         }.items():
             logging.debug('loading {}'.format(table))
-            print(table)
             columns = [c.upper() for c in columns]
-            print(columns)
             setattr(self, table, raw_data_svc.getFullTable(table, columns))
             getattr(self, table).columns = [c.lower() for c in getattr(self, table).columns]
 
@@ -78,7 +76,6 @@ class MergeFundRawDataAlg(AlgBase):
         
         ### 合并基本信息数据
         fund_list = pd.merge(fund_info, fund_sector, how='left', on=['f_info_windcode'])    # merge基金
-        print(fund_list.shape)
         
         fund_list = pd.merge(fund_list, fund_totalNV, how='left', on=['f_info_windcode'])
         fund_list = pd.merge(fund_list, fund_allocation, how='left', on=['f_info_windcode'])
