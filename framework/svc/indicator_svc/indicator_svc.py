@@ -32,7 +32,7 @@ class IndicatorSvc(Singleton):
         print('init IndicatorSvc')
 
     def getReturn(self, data, periods=constant_svc.DAY_OF_YEAR, annualize=True, prepare_returns=True, **kwargs):
-        data = data.fillna(method='ffill').dropna()
+        data = data.fillna(method='ffill').dropna() + 1
         assert data.shape[0], 'cannot handle null data'
         if prepare_returns:
             return_ = data[-1] / data[0]

@@ -25,23 +25,24 @@ from alg.alg_base import AlgBase
 constant_svc = getSvc('ConstantSvc')
 raw_data_svc = getSvc('LxwWinddbRawDataSvc')
 
+indicator_svc = getSvc('IndicatorSvc')
+
 from component.asset.asset import Asset
 
-class FundStyleIdentificationAlg(AlgBase):
-    def __init__(self, name, args={}) -> None:
+class FundStyleIdentificationAlg():
+    def __init__(self) -> None:
         self.factor_raw_data_path = os.path.join(this_path, 'factors')
 
-        self.look_back = constant_svc.DAY_OF_MONTH*2
+        self.look_back = constant_svc.DAY_OF_YEAR
 
-        super().__init__(name, args)
         self._setFactorDict()
         self._loadFactorData()
 
         self._fund_asset = {}
 
         if self.__class__.__name__ == 'FundStyleIdentificationAlg':
-            self._campisi = Campisi('')
-            self._stock_fund_identification = StockFundIdentification('')
+            self._campisi = Campisi()
+            self._stock_fund_identification = StockFundIdentification()
 
     def _setFactorDict(self):
         pass
@@ -122,8 +123,8 @@ class FundStyleIdentificationAlg(AlgBase):
 
 
 class Campisi(FundStyleIdentificationAlg):
-    def __init__(self, name, args={}) -> None:
-        super().__init__(name, args)
+    def __init__(self, ) -> None:
+        super().__init__()
 
     def _setFactorDict(self):
         self._factor_dict = {
@@ -182,12 +183,53 @@ class Campisi(FundStyleIdentificationAlg):
                 fund_style.loc[code, 'default'] = 'balanced'
 
         return fund_style
-        
+
+    def _calculateFundScore(self, exposure):
+        exposure = exposure['default']
+        df = pd.DataFrame(columns=['alpha', 'momentum', 'slope', 'credit', 'sharpe', 'calmar'])
+        weights = pd.Series([0.2, 0.2, 0.05, 0.05, 0.25, 0.25], index=df.columns)
+        for code, fund_exposure in exposure.items():
+            params, _ = fund_exposure[0], fund_exposure[1]
+            returns = self._fund_asset[code].getUsableReturnData()
+            data = []
+
+            # alpha
+            data.append(params['const'])
+            # momentum
+            data.append(indicator_svc.getReturn(returns, prepare_returns=False))
+            # slope
+            data.append(params['SLOPE'])
+            # credit
+            data.append(params['CREDIT'])
+            # sharpe
+            data.append(indicator_svc.getSharpe(returns))
+            # calmar
+            data.append(indicator_svc.getCalmar(returns))
+
+            df.loc[code] = data
+
+        # to score
+        df['score'] = ((df.rank() / df.shape[0]) * weights).sum(axis=1)
+        df = df.sort_values(by='score',ascending=False)
+
+        return df
+
+    def getBestScoreFunds(self, id_date, fund_info, n=10):
+        factor_data = self._getFactorData(id_date)
+        exposure = self._getFactorExposure(id_date, fund_info, factor_data)
+        return list(self._calculateFundScore(exposure).index[:min(n, fund_info.shape[0])])
+
+
+    def getBestScoreFunds(self, id_date, fund_info, n=10):
+        factor_data = self._getFactorData(id_date)
+        exposure = self._getFactorExposure(id_date, fund_info, factor_data)
+        return list(self._calculateFundScore(exposure).index[:min(n, fund_info.shape[0])])
+
 
 
 class StockFundIdentification(FundStyleIdentificationAlg):
-    def __init__(self, name, args={}) -> None:
-        super().__init__(name, args)
+    def __init__(self, ) -> None:
+        super().__init__()
 
     def _setFactorDict(self):
         self._factor_dict = {

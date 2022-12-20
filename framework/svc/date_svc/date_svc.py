@@ -44,17 +44,19 @@ class DateSvc(Singleton):
         return self._trade_days
 
     def cutDataWithIndex(self, data, index):
-        assert not [i for i in index if i not in self.getAllTradeDays()], 'index must in all_trade_days'
-        found_index = [i for i in index if i in data.index]
-        not_found_index =  [i for i in index if i not in data.index]
-        if not_found_index:
-            logging.debug('DateSvc.cutDataWithIndex: some index not found in data.index')
-        if isinstance(data, pd.Series):
-            tmp = pd.Series(index=index, dtype=float)
-        else:
-            tmp = pd.DataFrame(index=index, columns=data.columns)
-        tmp.loc[found_index] = data.loc[found_index]
-        return tmp
+        # assert not [i for i in index if i not in self.getAllTradeDays()], 'index must in all_trade_days'
+        # found_index = [i for i in index if i in data.index]
+        # not_found_index =  [i for i in index if i not in data.index]
+        # if not_found_index:
+        #     logging.debug('DateSvc.cutDataWithIndex: some index not found in data.index')
+        # if isinstance(data, pd.Series):
+        #     tmp = pd.Series(index=index, dtype=float)
+        # else:
+        #     tmp = pd.DataFrame(index=index, columns=data.columns)
+        # tmp.loc[found_index] = data.loc[found_index]
+        # return tmp
+
+        return data.reindex(index)
 
 
     def cutDataWithWindow(self, data, id_date, window):
@@ -91,7 +93,7 @@ class DateSvc(Singleton):
         elif len(args) == 2:
             return self.cutDataWithIndex(data, self.getIndex(*args))
 
-    def filterDateIndex(self, date_index, frequency=1):
+    def filterDateIndex(self, date_index, frequency=1, first=True):
         assert isinstance(frequency, int) or frequency in ['weekly', 'monthly', 'quarterly']
 
         # case 1: int
@@ -104,13 +106,18 @@ class DateSvc(Singleton):
         tmp['year'] = [d.year for d in date_index]
         if frequency == 'weekly':
             tmp['week_of_year'] = [d.weekofyear for d in date_index]
-            return list(tmp.groupby(['year', 'week_of_year']).first()['date'])
+            tmp_group = tmp.groupby(['year', 'week_of_year'])
         if frequency == 'monthly':
             tmp['month'] = [d.month for d in date_index]
-            return list(tmp.groupby(['year', 'month']).first()['date'])
+            tmp_group = tmp.groupby(['year', 'month'])
         if frequency == 'quarterly':
             tmp['quarter'] = [(d.month-1)//3 for d in date_index]
-            return list(tmp.groupby(['year', 'quarter']).first()['date'].values)
+            tmp_group = tmp.groupby(['year', 'quarter'])
+
+        if first:
+            return list(tmp_group.first()['date'])
+        else:
+            return list(tmp_group.last()['date'])
 
 
 

@@ -10,6 +10,7 @@ import os, sys, logging
 import pandas as pd
 
 from dateutil.parser import parse
+from datetime import datetime, timedelta
 
 
 framework_path = os.path.join(os.path.dirname(__file__), '../framework')
@@ -24,9 +25,9 @@ date_svc = getSvc('DateSvc')
 
 date_svc.setTradeDays(raw_data_svc.getTradeDays())
 
-class MergeFundRawDataAlg(AlgBase):
-    def __init__(self, name) -> None:
-        super().__init__(name)
+
+class MergeFundRawDataAlg():
+    def __init__(self, ) -> None:
         self._loadRawData()
         self._formatDate()
 
@@ -43,6 +44,7 @@ class MergeFundRawDataAlg(AlgBase):
             setattr(self, table, raw_data_svc.getFullTable(table, columns))
             getattr(self, table).columns = [c.lower() for c in getattr(self, table).columns]
 
+
     def _formatDate(self):
         self.chinamutualfunddescription['f_info_issuedate'] = pd.to_datetime(self.chinamutualfunddescription.loc[:, 'f_info_issuedate'])
         self.chinamutualfunddescription['f_info_delistdate'] = pd.to_datetime(self.chinamutualfunddescription.loc[:, 'f_info_delistdate'])
@@ -55,7 +57,8 @@ class MergeFundRawDataAlg(AlgBase):
         fund_sector = self.chinamutualfundsector[['f_info_windcode', 's_info_sector']]  # 基金代码、基金类型编码
         
         ### 基金净资产规模    # 数据为id_date当天或最近交易日
-        latest_tradeday = [d for d in date_svc.getAllTradeDays() if d <= id_date][-1]
+        # latest_tradeday = [d for d in date_svc.getAllTradeDays() if d <= id_date][-1]
+        latest_tradeday = datetime(id_date.year, ((id_date.month-1)//3)*3+1, 1) - timedelta(days=1)
         
         fund_totalNV = self.chinamutualfundnav.loc[self.chinamutualfundnav['price_date']==latest_tradeday]
         fund_totalNV = fund_totalNV[['f_info_windcode', 'netasset_total']]
@@ -70,7 +73,7 @@ class MergeFundRawDataAlg(AlgBase):
         fund_allocation = fund_allocation.reset_index(drop=True).groupby(by='s_info_windcode').head(qtr_n)
         
         # 计算最近4个季度平均股票、债券持仓比例
-        fund_allocation = fund_allocation.groupby('s_info_windcode').mean()
+        fund_allocation = fund_allocation.groupby('s_info_windcode').mean(numeric_only=True)
         fund_allocation.reset_index(inplace=True)
         fund_allocation.rename(columns={'s_info_windcode':'f_info_windcode'}, inplace=True)    # 修改code列名 后续merge
         

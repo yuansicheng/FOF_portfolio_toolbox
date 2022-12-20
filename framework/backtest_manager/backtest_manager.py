@@ -74,7 +74,8 @@ class BackTestManager:
             # print('order before')
             # order.print()
             self.getDataset().getAsset(order.asset).executeOrder(order)
-            self.getDataset().getAsset('cash').updateCash(order.delta_cash)
+            if order.executed:
+                self.getDataset().getAsset('cash').updateCash(order.delta_cash)
             self.getOrderManager().addOrder(order)
             # print('order after')
             # order.print()
@@ -100,9 +101,9 @@ class BackTestManager:
         # convert weights to orders
         open_flag = False
         for asset, weight in self._weights.items():
-            target_position = self.getDataset().getPositionManager().truth_position * weight
             asset_obj = self._getAssetObj(asset)
             asset_position_manager = asset_obj.getPositionManager()
+            target_position = self.getDataset().getPositionManager().truth_position * weight - asset_position_manager.holding_return * asset_position_manager.status # the bias use to reduce the difference cause by holding
             tmp_order = Order(
                 date = self._id_date, 
                 asset = asset, 

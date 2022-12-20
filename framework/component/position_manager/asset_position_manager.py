@@ -60,6 +60,7 @@ class AssetPositionManager(PositionManagerBase):
         input: an order
         '''
         if order.option == 'clear_all':
+            order.target_position = 0
             self._clearAll(order)
         elif order.option =='open':
             self._open(order)
@@ -74,11 +75,13 @@ class AssetPositionManager(PositionManagerBase):
             logging.error('Order Ececuted Error')
 
     def _updateMargin(self):
-        if not self.status or self.margin_ratio==1:
+        if self.status >= 0 and self.margin_ratio==1:
             return 0
-        target_margin = self.position * self.margin_ratio
+        target_margin = self.position * self.margin_ratio * self.status
         delta_margin = target_margin - self.margin
         self.investment += delta_margin
+
+        self.margin = target_margin
 
         return -delta_margin
 
@@ -121,6 +124,7 @@ class AssetPositionManager(PositionManagerBase):
         # 1  
         delta_cash += (-delta_margin - cost)      
         self.investment += delta_margin + cost
+        self.position = self.shares * self.nav
 
         order.executed = 1
         order.delta_cash = delta_cash
@@ -141,6 +145,7 @@ class AssetPositionManager(PositionManagerBase):
         order.shares_before = self.shares
         delta_cash = self._updateMargin()  
         sell_proportion = 1 - order.target_position / self.position 
+        
         # 1
         self.investment *= (1 - sell_proportion)
         # 2
@@ -154,6 +159,7 @@ class AssetPositionManager(PositionManagerBase):
         self.transaction_cost += cost
         # 5 
         self.historical_return += self.holding_return * sell_proportion
+        self.position = self.shares * self.nav
 
         delta_cash += (delta_margin + self.holding_return * sell_proportion - cost)
 
