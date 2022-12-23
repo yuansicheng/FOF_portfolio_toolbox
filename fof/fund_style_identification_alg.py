@@ -5,9 +5,7 @@
 # @Contact	:	yuansicheng@ihep.ac.cn
 # @Date		:	2022-10-25 
 
-from email.policy import default
 import os, sys, argparse, logging
-from symbol import factor
 
 import pandas as pd
 import numpy as np
